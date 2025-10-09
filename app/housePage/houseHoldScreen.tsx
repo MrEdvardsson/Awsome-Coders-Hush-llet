@@ -1,4 +1,5 @@
 import { useAppTheme } from "@/constants/app-theme";
+// import { getAuth } from "firebase/auth";
 import React from "react";
 import { FlatList, View } from "react-native";
 import { Card, List, Text } from "react-native-paper";
@@ -7,11 +8,19 @@ import { mockHouseholds } from "./mockData";
 export default function houseHoldScreen() {
   const theme = useAppTheme();
 
-  console.log("Nu är du i household");
+  //    TODO: Skapa en hook "Hooks/useHouseHolds.ts" där man hämtar användarens hushåll
+  //------------------------------------------------------------------------------------
+  // const auth = getAuth();
+  // const user = auth.currentUser;
+  // const { households, loading, error } = useHouseholds(user?.uid);
+  // if (loading) return <Text style={{ margin: 20 }}>Laddar hushåll...</Text>;
+  // if (error) return <Text style={{ margin: 20, color: "red" }}>{error}</Text>;
+  //------------------------------------------------------------------------------------
 
   if (!mockHouseholds?.length) {
     return <Text style={{ margin: 20 }}>Du har inga hushåll ännu.</Text>;
   }
+  console.log("Nu är du i household");
 
   return (
     <View
