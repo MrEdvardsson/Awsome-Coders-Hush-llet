@@ -16,12 +16,7 @@ export default function HomeScreen() {
       }}
     >
       <TouchableOpacity
-        style={{
-          padding: 20,
-          backgroundColor: theme.colors.primary,
-          borderRadius: 10,
-        }}
-        onPress={() => router.push({ pathname: "/housePage/sysslor" })}
+        onPress={() => router.push("/housePage/houseHoldScreen")}
       >
         <Text
           style={{

@@ -1,8 +1,8 @@
 import {
-  MD3LightTheme,
   MD3DarkTheme,
-  useTheme,
+  MD3LightTheme,
   MD3Theme,
+  useTheme,
 } from "react-native-paper";
 
 export type AppTheme = MD3Theme & {
@@ -61,7 +61,7 @@ export const darkTheme = {
 
     // primär accent (10)
     primary: "#3391FF",
-    onPrimary: "#001229",
+    onPrimary: "#0df705ff",
 
     // sekundära (30)
     secondary: "#6B8FBF",
