@@ -1,7 +1,7 @@
 import { useAppTheme } from "@/constants/app-theme";
 import React from "react";
 import { FlatList, View } from "react-native";
-import { List, Text } from "react-native-paper";
+import { Card, List, Text } from "react-native-paper";
 
 export default function houseHoldScreen() {
   const theme = useAppTheme();
@@ -31,12 +31,16 @@ export default function houseHoldScreen() {
         data={households}
         keyExtractor={(item) => item.id}
         renderItem={({ item }) => (
-          <List.Item
-            title={item.name}
-            description={`Kod: ${item.generatedCode}`}
-            left={(props) => <List.Icon {...props} icon="home" />}
+          <Card
+            style={{ margin: 10, borderRadius: 15 }}
             onPress={() => console.log("Öppnade hushåll:", item.name)}
-          />
+          >
+            <Card.Title
+              title={item.name}
+              subtitle={`Kod: ${item.generatedCode}`}
+              left={(props) => <List.Icon {...props} icon="home" />}
+            />
+          </Card>
         )}
       />
     </View>
