@@ -1,5 +1,4 @@
 import { darkTheme, lightTheme } from "@/constants/app-theme";
-import { Header } from "@react-navigation/elements";
 import { Stack } from "expo-router";
 import { useColorScheme } from "react-native";
 import { PaperProvider } from "react-native-paper";
@@ -10,6 +9,10 @@ export default function RootLayout() {
     <PaperProvider theme={theme}>
       <Stack>
         <Stack.Screen name="index" options={{ headerShown: false }} />
+        <Stack.Screen
+          name="housePage/houseHoldScreen"
+          options={{ title: "Hushåll" }}
+        />
       </Stack>
     </PaperProvider>
   );

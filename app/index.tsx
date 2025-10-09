@@ -16,7 +16,7 @@ export default function HomeScreen() {
       }}
     >
       <TouchableOpacity
-        onPress={() => router.push("./housePage/houseHoldScreen")}
+        onPress={() => router.push("/housePage/houseHoldScreen")}
       >
         <Text
           style={{
