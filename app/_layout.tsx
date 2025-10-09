@@ -11,7 +11,7 @@ export default function RootLayout() {
         <Stack.Screen name="index" options={{ headerShown: false }} />
         <Stack.Screen
           name="housePage/houseHoldScreen"
-          options={{ title: "Hushåll" }}
+          options={{ title: "Hushåll", headerShown: false }}
         />
       </Stack>
     </PaperProvider>
