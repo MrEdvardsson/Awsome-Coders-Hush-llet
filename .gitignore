@@ -21,6 +21,9 @@ expo-env.d.ts
 # Metro
 .metro-health-check*
 
+# Firebase config 
+firebase-config.ts
+
 # debug
 npm-debug.*
 yarn-debug.*
