@@ -24,7 +24,7 @@ export default function houseHoldScreen() {
       <View style={{ flex: 8 }}>
         <FlatList
           style={{ height: "75%" }}
-          data={mockHouseholds}
+          data={mockHouseholds} // Mockdata, här ska den inloggade personens hushåll läsas
           keyExtractor={(item) => item.id}
           renderItem={({ item }) => (
             <Card
@@ -58,7 +58,7 @@ export default function houseHoldScreen() {
             borderRadius: 25,
             width: "40%",
           }}
-          onPress={() => console.log("Nu ska du lägga till ett hem!")}
+          onPress={() => console.log("Nu ska du lägga till ett hem!")} //Här ska en modal öppnas för fylla i de fält som krävs för att skapa nytt hushåll!
         >
           <Card.Content
             style={{
@@ -78,7 +78,7 @@ export default function houseHoldScreen() {
             borderRadius: 25,
             width: "40%",
           }}
-          onPress={() => console.log("Nu ska du joina ett hem!")}
+          onPress={() => console.log("Nu ska du joina ett hem!")} //Här ska en modal öppnas för att skriva in en kod som leder till ett visst hushåll!
         >
           <Card.Content
             style={{
