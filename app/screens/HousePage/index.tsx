@@ -3,9 +3,9 @@ import { useAppTheme } from "@/constants/app-theme";
 import React from "react";
 import { FlatList, View } from "react-native";
 import { Card, List, Text } from "react-native-paper";
-import { mockHouseholds } from "./mockData";
+import { mockHouseholds } from "../../../src/data/mockdata";
 
-export default function houseHoldScreen() {
+export default function HouseholdScreen() {
   const theme = useAppTheme();
 
   //    TODO: Skapa en hook "Hooks/useHouseHolds.ts" där man hämtar användarens hushåll
