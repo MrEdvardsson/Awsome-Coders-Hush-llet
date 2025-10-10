@@ -64,24 +64,3 @@ async function LogInFireBase() {
     console.error("Fel vid inloggning:", error);
   }
 }
-
-// Endast en test funktion för att testa om inloggningen fungerar.
-// Har skapat en användare i Firebase Console med dessa uppgifter.
-// Så om ni vill testa så kan nu köra denn funktionen vid uppstart, lägg till dessa i er egna databas.
-// Och kör funktionen LogInFireBase(); Vid uppstart av appen.
-async function LogInFireBase() {
-  const email = "alexander@gmail.com";
-  const password = "alexander123";
-
-  try {
-    const userCredential = await signInWithEmailAndPassword(
-      auth,
-      email,
-      password
-    );
-    const user = userCredential.user;
-    console.log("Inloggad användare:", user);
-  } catch (error) {
-    console.error("Fel vid inloggning:", error);
-  }
-}
