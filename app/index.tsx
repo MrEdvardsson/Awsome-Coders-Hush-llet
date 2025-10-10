@@ -15,15 +15,29 @@ export default function HomeScreen() {
         alignItems: "center",
       }}
     >
-      <TouchableOpacity
-        onPress={() => router.push("/housePage/houseHoldScreen")}
-      >
+      <TouchableOpacity onPress={() => router.push("/screens/HousePage")}>
         <Text
           style={{
             color: theme.colors.onPrimary,
           }}
         >
           Välj hushåll
+        </Text>
+      </TouchableOpacity>
+      <TouchableOpacity
+        style={{
+          padding: 20,
+          backgroundColor: theme.colors.primary,
+          borderRadius: 10,
+        }}
+        onPress={() => router.push("/screens/LoginPage")}
+      >
+        <Text
+          style={{
+            color: theme.colors.onPrimary,
+          }}
+        >
+          Loginpage
         </Text>
       </TouchableOpacity>
     </View>

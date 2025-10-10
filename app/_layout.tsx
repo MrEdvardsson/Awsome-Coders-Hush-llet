@@ -7,11 +7,15 @@ export default function RootLayout() {
   const theme = colorScheme === "dark" ? darkTheme : lightTheme;
   return (
     <PaperProvider theme={theme}>
-      <Stack>
+      <Stack screenOptions={{ headerShown: false }}>
         <Stack.Screen name="index" options={{ headerShown: false }} />
         <Stack.Screen
-          name="housePage/houseHoldScreen"
+          name="screens/HousePage"
           options={{ title: "Hushåll", headerShown: false }}
+        />
+        <Stack.Screen
+          name="screens/LoginPage"
+          options={{ headerShown: false }}
         />
       </Stack>
     </PaperProvider>
