@@ -61,7 +61,7 @@ export const darkTheme = {
 
     // primär accent (10)
     primary: "#3391FF",
-    onPrimary: "#0df705ff",
+    onPrimary: "#ffffffff",
 
     // sekundära (30)
     secondary: "#6B8FBF",
