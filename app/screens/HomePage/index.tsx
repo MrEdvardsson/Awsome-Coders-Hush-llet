@@ -15,7 +15,7 @@ export default function HomeScreen() {
         alignItems: "center",
       }}
     >
-      <TouchableOpacity onPress={() => router.push("/screens/HousePage")}>
+      <TouchableOpacity onPress={() => router.push("/screens/housepage")}>
         <Text
           style={{
             color: theme.colors.onPrimary,
@@ -30,7 +30,7 @@ export default function HomeScreen() {
           backgroundColor: theme.colors.primary,
           borderRadius: 10,
         }}
-        onPress={() => router.push("/screens/LoginPage")}
+        onPress={() => router.push("/screens/loginpage")}
       >
         <Text
           style={{
