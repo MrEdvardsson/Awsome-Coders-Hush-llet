@@ -1,7 +1,7 @@
 // Ska returnera en query från tAnstack react query som kollar om användaren är inloggad eller inte
-import { onAuthStateChanged, type User } from "@firebase/auth";
 import { auth } from "@/firebase-config";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { onAuthStateChanged, type User } from "firebase/auth";
 import { useEffect } from "react";
 
 export const AUTH_KEY = ["auth", "user"] as const;

@@ -1,45 +1,108 @@
-//Välj hushåll
 import { useAppTheme } from "@/constants/app-theme";
+// import { getAuth } from "firebase/auth";
 import { router } from "expo-router";
-import { Text, TouchableOpacity, View } from "react-native";
-// Logged in page
-export default function HomeScreen() {
+import React from "react";
+import { FlatList, View } from "react-native";
+import { Card, List, Text } from "react-native-paper";
+import { SafeAreaView } from "react-native-safe-area-context";
+import { mockHouseholds } from "../../../src/data/mockdata";
+
+export default function HouseholdScreen() {
   const theme = useAppTheme();
+
+  //    TODO: Skapa en hook "Hooks/useHouseHolds.ts" där man hämtar användarens hushåll
+  //------------------------------------------------------------------------------------
+  // const auth = getAuth();
+  // const user = auth.currentUser;
+  // const { households, loading, error } = useHouseholds(user?.uid);
+  // if (loading) return <Text style={{ margin: 20 }}>Laddar hushåll...</Text>;
+  // if (error) return <Text style={{ margin: 20, color: "red" }}>{error}</Text>;
+  //------------------------------------------------------------------------------------
+
+  if (!mockHouseholds?.length) {
+    return <Text style={{ margin: 20 }}>Du har inga hushåll ännu.</Text>;
+  }
+
   return (
-    //example with theme.
-    <View
+    <SafeAreaView
       style={{
-        flex: 1,
         backgroundColor: theme.colors.background,
-        justifyContent: "center",
-        alignItems: "center",
+        height: "100%",
+        paddingTop: 20,
       }}
     >
-      <TouchableOpacity onPress={() => router.push("/screens/HousePage")}>
-        <Text
-          style={{
-            color: theme.colors.onPrimary,
-          }}
-        >
-          Välj hushåll
-        </Text>
-      </TouchableOpacity>
-      <TouchableOpacity
+      <View style={{ flex: 8 }}>
+        <FlatList
+          style={{ height: "75%" }}
+          data={mockHouseholds} // Mockdata, här ska den inloggade personens hushåll läsas
+          keyExtractor={(item) => item.id}
+          renderItem={({ item }) => (
+            <Card
+              style={{ margin: 10, borderRadius: 15 }}
+              onPress={() => router.push("/screens/HouseholdPage")}
+            >
+              <Card.Title
+                title={item.name}
+                subtitle={`Kod: ${item.generatedCode}`}
+                left={(props) => <List.Icon {...props} icon="home" />}
+              />
+            </Card>
+          )}
+        />
+      </View>
+      <View
         style={{
-          padding: 20,
-          backgroundColor: theme.colors.primary,
-          borderRadius: 10,
+          flex: 1,
+          padding: 10,
+          backgroundColor: "grey",
+          borderTopLeftRadius: 15,
+          borderTopRightRadius: 15,
+          flexDirection: "row",
+          justifyContent: "space-between",
+          alignItems: "center",
         }}
-        onPress={() => router.push("/screens/LoginPage")}
       >
-        <Text
+        <Card
           style={{
-            color: theme.colors.onPrimary,
+            margin: 10,
+            borderRadius: 25,
+            width: "40%",
           }}
+          onPress={() => console.log("Nu ska du lägga till ett hem!")} //Här ska en modal öppnas för fylla i de fält som krävs för att skapa nytt hushåll!
         >
-          Loginpage
-        </Text>
-      </TouchableOpacity>
-    </View>
+          <Card.Content
+            style={{
+              flexDirection: "row",
+              justifyContent: "space-between",
+              alignItems: "center",
+              padding: 10,
+            }}
+          >
+            <Text variant="titleMedium">Lägg till</Text>
+            <List.Icon icon="plus" />
+          </Card.Content>
+        </Card>
+        <Card
+          style={{
+            margin: 10,
+            borderRadius: 25,
+            width: "40%",
+          }}
+          onPress={() => router.push("/screens/HomePage/JoinHouseholdScreen")}
+        >
+          <Card.Content
+            style={{
+              flexDirection: "row",
+              justifyContent: "space-between",
+              alignItems: "center",
+              padding: 10,
+            }}
+          >
+            <Text variant="titleMedium">Gå med </Text>
+            <List.Icon icon="plus" />
+          </Card.Content>
+        </Card>
+      </View>
+    </SafeAreaView>
   );
 }
