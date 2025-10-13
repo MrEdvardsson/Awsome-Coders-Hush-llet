@@ -1,21 +1,51 @@
 import { useAppTheme } from "@/constants/app-theme";
 // import { getAuth } from "firebase/auth";
 import React from "react";
-import { FlatList, View } from "react-native";
+import { FlatList, StyleSheet, View } from "react-native";
 import { Card, List, Text } from "react-native-paper";
 import { mockHouseholds } from "../../../src/data/mockdata";
 
 export default function HouseholdScreen() {
   const theme = useAppTheme();
 
-  //    TODO: Skapa en hook "Hooks/useHouseHolds.ts" där man hämtar användarens hushåll
-  //------------------------------------------------------------------------------------
-  // const auth = getAuth();
-  // const user = auth.currentUser;
-  // const { households, loading, error } = useHouseholds(user?.uid);
-  // if (loading) return <Text style={{ margin: 20 }}>Laddar hushåll...</Text>;
-  // if (error) return <Text style={{ margin: 20, color: "red" }}>{error}</Text>;
-  //------------------------------------------------------------------------------------
+  const styles = StyleSheet.create({
+    container: {
+      backgroundColor: theme.colors.background,
+      height: "100%",
+      paddingTop: 20,
+    },
+    listContainer: {
+      flex: 8,
+    },
+    flatlist: {
+      height: "75%",
+    },
+    householdCard: {
+      margin: 10,
+      borderRadius: 15,
+    },
+    footer: {
+      flex: 1,
+      padding: 10,
+      backgroundColor: "grey",
+      borderTopLeftRadius: 15,
+      borderTopRightRadius: 15,
+      flexDirection: "row",
+      justifyContent: "space-between",
+      alignItems: "center",
+    },
+    footerCard: {
+      margin: 10,
+      borderRadius: 25,
+      width: "40%",
+    },
+    footerCardContent: {
+      flexDirection: "row",
+      justifyContent: "space-between",
+      alignItems: "center",
+      padding: 10,
+    },
+  });
 
   if (!mockHouseholds?.length) {
     return <Text style={{ margin: 20 }}>Du har inga hushåll ännu.</Text>;
@@ -23,21 +53,15 @@ export default function HouseholdScreen() {
   console.log("Nu är du i household");
 
   return (
-    <View
-      style={{
-        backgroundColor: theme.colors.background,
-        height: "100%",
-        paddingTop: 20,
-      }}
-    >
-      <View style={{ flex: 8 }}>
+    <View style={styles.container}>
+      <View style={styles.listContainer}>
         <FlatList
-          style={{ height: "75%" }}
+          style={styles.flatlist}
           data={mockHouseholds} // Mockdata, här ska den inloggade personens hushåll läsas
           keyExtractor={(item) => item.id}
           renderItem={({ item }) => (
             <Card
-              style={{ margin: 10, borderRadius: 15 }}
+              style={styles.householdCard}
               onPress={() => console.log("Öppnade hushåll:", item.name)}
             >
               <Card.Title
@@ -49,24 +73,9 @@ export default function HouseholdScreen() {
           )}
         />
       </View>
-      <View
-        style={{
-          flex: 1,
-          padding: 10,
-          backgroundColor: "grey",
-          borderTopLeftRadius: 15,
-          borderTopRightRadius: 15,
-          flexDirection: "row",
-          justifyContent: "space-between",
-          alignItems: "center",
-        }}
-      >
+      <View style={styles.footer}>
         <Card
-          style={{
-            margin: 10,
-            borderRadius: 25,
-            width: "40%",
-          }}
+          style={styles.footerCard}
           onPress={() => console.log("Nu ska du lägga till ett hem!")} //Här ska en modal öppnas för fylla i de fält som krävs för att skapa nytt hushåll!
         >
           <Card.Content
@@ -82,21 +91,10 @@ export default function HouseholdScreen() {
           </Card.Content>
         </Card>
         <Card
-          style={{
-            margin: 10,
-            borderRadius: 25,
-            width: "40%",
-          }}
+          style={styles.footerCard}
           onPress={() => console.log("Nu ska du joina ett hem!")} //Här ska en modal öppnas för att skriva in en kod som leder till ett visst hushåll!
         >
-          <Card.Content
-            style={{
-              flexDirection: "row",
-              justifyContent: "space-between",
-              alignItems: "center",
-              padding: 10,
-            }}
-          >
+          <Card.Content style={styles.footerCardContent}>
             <Text variant="titleMedium">Gå med </Text>
             <List.Icon icon="plus" />
           </Card.Content>
@@ -105,3 +103,12 @@ export default function HouseholdScreen() {
     </View>
   );
 }
+
+//    TODO: Skapa en hook "Hooks/useHouseHolds.ts" där man hämtar användarens hushåll
+//------------------------------------------------------------------------------------
+// const auth = getAuth();
+// const user = auth.currentUser;
+// const { households, loading, error } = useHouseholds(user?.uid);
+// if (loading) return <Text style={{ margin: 20 }}>Laddar hushåll...</Text>;
+// if (error) return <Text style={{ margin: 20, color: "red" }}>{error}</Text>;
+//------------------------------------------------------------------------------------
