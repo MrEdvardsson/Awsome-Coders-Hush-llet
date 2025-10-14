@@ -4,17 +4,17 @@ import { auth } from "@/firebase-config";
 import { useReactQuerySetup } from "@/hooks/use-react-query-setup";
 import { signInWithEmailAndPassword } from "@firebase/auth";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { Stack } from "expo-router";
 import * as SplashScreen from "expo-splash-screen";
 import React, { useEffect } from "react";
 import { useColorScheme } from "react-native";
 import { PaperProvider } from "react-native-paper";
-
+import RootNavigation from "./root-navigation";
 SplashScreen.preventAutoHideAsync();
 
 const queryClient = new QueryClient();
 export default function RootLayout() {
   // LogInFireBase();
+  // LogOutFireBase();
   const colorScheme = useColorScheme();
   const theme = colorScheme === "dark" ? darkTheme : lightTheme;
   useReactQuerySetup();
@@ -28,17 +28,8 @@ export default function RootLayout() {
       <PaperProvider theme={theme}>
         {/* En komponent som lyssnar på auth förändringar */}
         <AuthCacheListener />
-        <Stack screenOptions={{ headerShown: false }}>
-          <Stack.Screen name="index" options={{ headerShown: false }} />
-          <Stack.Screen
-            name="screens/HousePage"
-            options={{ title: "Hushåll", headerShown: false }}
-          />
-          <Stack.Screen
-            name="screens/LoginPage"
-            options={{ headerShown: false }}
-          />
-        </Stack>
+        {/*Navigerar till rätt sida baserat på autentisering*/}
+        <RootNavigation />
       </PaperProvider>
     </QueryClientProvider>
   );
@@ -48,7 +39,7 @@ export default function RootLayout() {
 // Har skapat en användare i Firebase Console med dessa uppgifter.
 // Så om ni vill testa så kan nu köra denn funktionen vid uppstart, lägg till dessa i er egna databas.
 // Och kör funktionen LogInFireBase(); Vid uppstart av appen.
-async function LogInFireBase() {
+export async function LogInFireBase() {
   const email = "alexander@gmail.com";
   const password = "alexander123";
 
@@ -62,5 +53,15 @@ async function LogInFireBase() {
     console.log("Inloggad användare:", user);
   } catch (error) {
     console.error("Fel vid inloggning:", error);
+  }
+}
+
+//Endast testmetod för att logga ut användaren och se så man blir skickad till login sidan.
+export async function LogOutFireBase() {
+  try {
+    await auth.signOut();
+    console.log("Användare utloggad");
+  } catch (error) {
+    console.error("Fel vid utloggning:", error);
   }
 }

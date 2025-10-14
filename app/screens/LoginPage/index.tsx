@@ -1,4 +1,6 @@
+import { LogInFireBase } from "@/app/_layout";
 import { useAppTheme } from "@/constants/app-theme";
+import { router } from "expo-router";
 import React, { useState } from "react";
 import { Alert, ImageBackground, StyleSheet, View } from "react-native";
 import { Button, Surface, Text, TextInput } from "react-native-paper";
@@ -81,7 +83,6 @@ export default function LoginPage() {
                 },
               }}
             />
-
             <Button
               mode="contained"
               onPress={handleLogin}
@@ -91,6 +92,16 @@ export default function LoginPage() {
               contentStyle={styles.buttonContent}
             >
               Logga in
+            </Button>
+            <Button
+              mode="contained"
+              onPress={LogInFireBase}
+              loading={loading}
+              disabled={loading}
+              style={styles.loginButton}
+              contentStyle={styles.buttonContent}
+            >
+              Fejk-inloggning på Alex konto
             </Button>
             <Button
               mode="outlined"
@@ -124,7 +135,6 @@ const styles = StyleSheet.create({
   },
   title: {
     color: "white",
-    fontWeight: "bold",
     textAlign: "center",
     marginBottom: 16,
   },
@@ -151,17 +161,5 @@ const styles = StyleSheet.create({
   },
   buttonContent: {
     paddingVertical: 8,
-  },
-  footer: {
-    alignItems: "center",
-    marginTop: 40,
-  },
-  registerText: {
-    fontSize: 16,
-    textAlign: "center",
-  },
-  registerLink: {
-    fontWeight: "bold",
-    textDecorationLine: "underline",
   },
 });

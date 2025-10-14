@@ -11,7 +11,7 @@ export default function Index() {
   useEffect(() => {
     const timer = setTimeout(() => {
       setShowSplash(false);
-      router.push("/screens/LoginPage");
+      router.replace("/screens/loginpage");
     }, 4000);
 
     return () => clearTimeout(timer);
