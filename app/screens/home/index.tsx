@@ -1,5 +1,6 @@
 import { useAppTheme } from "@/constants/app-theme";
 // import { getAuth } from "firebase/auth";
+import { Ionicons } from "@expo/vector-icons";
 import { router } from "expo-router";
 import React from "react";
 import { FlatList, StyleSheet, TouchableOpacity, View } from "react-native";
@@ -46,6 +47,12 @@ export default function Home() {
       alignItems: "center",
       padding: 10,
     },
+    iconView: {
+      flexDirection: "row",
+      alignItems: "center",
+      marginRight: 12,
+      gap: 12,
+    },
   });
 
   if (!mockHouseholds?.length) {
@@ -68,15 +75,38 @@ export default function Home() {
               <Card.Title
                 title={item.name}
                 subtitle={`Kod: ${item.generatedCode}`}
-                left={(props) => <List.Icon {...props} icon="home" />}
-                right={(props) => (
-                  <TouchableOpacity
-                    onPress={() => router.push("/screens/home/info-household")}
-                  >
-                    <View style={{ marginRight: 8 }}>
-                      <List.Icon {...props} icon="information-outline" />
-                    </View>
-                  </TouchableOpacity>
+                left={() => (
+                  <Ionicons
+                    name="home"
+                    size={24}
+                    color={theme.colors.onBackground}
+                  />
+                )}
+                right={() => (
+                  <View style={styles.iconView}>
+                    <TouchableOpacity
+                      onPress={() =>
+                        router.push("/screens/home/info-household")
+                      }
+                    >
+                      <Ionicons
+                        name="information-circle-outline"
+                        size={24}
+                        color={theme.colors.onBackground}
+                      />
+                    </TouchableOpacity>
+                    <TouchableOpacity
+                      onPress={() =>
+                        router.push("/screens/home/settings-household")
+                      }
+                    >
+                      <Ionicons
+                        name="pencil"
+                        size={20}
+                        color={theme.colors.onBackground}
+                      />
+                    </TouchableOpacity>
+                  </View>
                 )}
               />
             </Card>

@@ -1,6 +1,7 @@
 import { useAppTheme } from "@/constants/app-theme";
 import { Ionicons } from "@expo/vector-icons";
 import { router } from "expo-router";
+import { useState } from "react";
 import {
   Alert,
   FlatList,
@@ -8,15 +9,15 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
-import { Card, Text } from "react-native-paper";
+import { Card, Text, TextInput } from "react-native-paper";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { profileMock } from "../../../src/data/mockdata";
 
 export default function InfoHousehold() {
   const theme = useAppTheme();
+  const [titel, setTitel] = useState("");
   const isAdmin = true;
 
-  //TODO Detta är Admin vy. Måste lägga till gästvy
   return (
     <SafeAreaView style={{ backgroundColor: theme.colors.background }}>
       <View
@@ -45,6 +46,33 @@ export default function InfoHousehold() {
         style={[styles.houseCode, { backgroundColor: theme.colors.primary }]}
       >
         <Text variant="titleLarge">HushållsKod</Text>
+      </View>
+      <View>
+        {isAdmin && (
+          <View style={{ borderBottomWidth: 1 }}>
+            <Text
+              variant="titleMedium"
+              style={{
+                color: theme.colors.onSurface,
+                paddingLeft: 12,
+                paddingTop: 5,
+              }}
+            >
+              Ange ny titel
+            </Text>
+            <Card style={styles.titleInput}>
+              <TextInput
+                mode="outlined"
+                placeholder={titel || "Här kommer hushållets namn att synas"}
+                value={titel}
+                onChangeText={setTitel}
+                style={{ backgroundColor: theme.colors.surface }}
+                outlineColor={theme.colors.outline}
+                activeOutlineColor={theme.colors.primary}
+              />
+            </Card>
+          </View>
+        )}
       </View>
       <View style={styles.flatlistView}>
         <FlatList
@@ -167,7 +195,7 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
   },
   flatlistNotPending: {
-    marginBottom: 10,
+    marginVertical: 10,
   },
   flatlistPending: {
     marginTop: 10,
@@ -189,4 +217,14 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   iconCheckmark: {},
+  titleInput: {
+    marginHorizontal: 10,
+    marginBottom: 20,
+    borderRadius: 15,
+    elevation: 2,
+    shadowColor: "#000",
+    shadowOpacity: 0.15,
+    shadowRadius: 4,
+    shadowOffset: { width: 0, height: 2 },
+  },
 });
