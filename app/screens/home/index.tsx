@@ -6,7 +6,7 @@ import { FlatList, StyleSheet, View } from "react-native";
 import { Card, List, Text } from "react-native-paper";
 import { mockHouseholds } from "../../../src/data/mockdata";
 
-export default function HouseholdScreen() {
+export default function Home() {
   const theme = useAppTheme();
 
   const styles = StyleSheet.create({
@@ -77,7 +77,7 @@ export default function HouseholdScreen() {
       <View style={styles.footer}>
         <Card
           style={styles.footerCard}
-          onPress={() => router.push("/screens/homepage/CreateHouseHold")}
+          onPress={() => router.push("/screens/home/create-household")}
         >
           <Card.Content style={styles.footerCardContent}>
             <Text variant="titleMedium">Lägg till</Text>
@@ -85,8 +85,12 @@ export default function HouseholdScreen() {
           </Card.Content>
         </Card>
         <Card
-          style={styles.footerCard}
-          onPress={() => console.log("Nu ska du joina ett hem!")} //Här ska en modal öppnas för att skriva in en kod som leder till ett visst hushåll!
+          style={{
+            margin: 10,
+            borderRadius: 25,
+            width: "40%",
+          }}
+          onPress={() => router.push("/screens/home/join-household")}
         >
           <Card.Content style={styles.footerCardContent}>
             <Text variant="titleMedium">Gå med </Text>
