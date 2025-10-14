@@ -5,7 +5,7 @@ import { Alert, StyleSheet, View } from "react-native";
 import { Button, Surface, Text, TextInput } from "react-native-paper";
 import { SafeAreaView } from "react-native-safe-area-context";
 
-export default function createHouseHold() {
+export default function CreateHouseHold() {
   const theme = useAppTheme();
 
   const [title, setTitle] = useState("");

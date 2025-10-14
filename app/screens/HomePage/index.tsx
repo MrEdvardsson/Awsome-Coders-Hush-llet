@@ -6,7 +6,7 @@ import { FlatList, StyleSheet, View } from "react-native";
 import { Card, List, Text } from "react-native-paper";
 import { mockHouseholds } from "../../../src/data/mockdata";
 
-export default function householdScreen() {
+export default function HouseholdScreen() {
   const theme = useAppTheme();
 
   const styles = StyleSheet.create({
@@ -77,7 +77,7 @@ export default function householdScreen() {
       <View style={styles.footer}>
         <Card
           style={styles.footerCard}
-          onPress={() => router.push("/screens/homepage/createHouseHold")}
+          onPress={() => router.push("/screens/homepage/CreateHouseHold")}
         >
           <Card.Content style={styles.footerCardContent}>
             <Text variant="titleMedium">Lägg till</Text>
