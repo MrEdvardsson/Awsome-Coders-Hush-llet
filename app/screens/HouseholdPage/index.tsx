@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { Text, View, FlatList, TouchableOpacity, StyleSheet } from "react-native";
 import { useAppTheme } from "@/constants/app-theme";
 import { Card } from "react-native-paper";
+import { router } from "expo-router";
 
 type mockChore = {
     id: string;
@@ -33,42 +34,30 @@ const mockChores: mockChore[] = [
         weight: 5,
         isArchived: false,
         assignedTo: "user2",
-    }
+    },
+    {
+        id: "3",
+        title: "Moppa golven",
+        description: "Moppa alla golv i huset.",
+        frequencyDats: 14,
+        weight: 20,
+        isArchived: false,
+        assignedTo: "user3",
+    },
 ];
 
 export default function HouseholdPage() {
     const theme = useAppTheme();
 
     return (
-        <View
-            style={{
-                flex: 1,
-                backgroundColor: theme.colors.background,
-                justifyContent: 'center',
-                alignItems: 'center',
-                padding: 20,
-            }}
-        >
-            <Text
-                style={{
-                    fontSize: 18,
-                    color: theme.colors.onSurface,
-                    textAlign: 'center',
-                }}
-            >
-                Här är när man gått in i ett hushåll och ska se lista över chores osv
-            </Text>
-            <Text
-                style={{
-                    fontSize: 14,
-                    color: theme.colors.onSurface,
-                    opacity: 0.7,
-                    textAlign: 'center',
-                    marginTop: 20,
-                }}
-            >
-                Denna sida kommer att utvecklas senare.
-            </Text>
+        <View style={{ flex: 1, backgroundColor: theme.colors.background, paddingTop: 20 }}>
+            <FlatList data = {mockChores} keyExtractor={(item) => item.id} renderItem={({ item }) => (
+                <Card style={{ margin: 10, borderRadius: 15 }} onPress={() => router.push("/screens/householdpage/choreDetails")}>
+                    <Card.Title title={item.title}/>
+                </Card>
+            )}>
+            </FlatList>
         </View>
+        
     );
 }
