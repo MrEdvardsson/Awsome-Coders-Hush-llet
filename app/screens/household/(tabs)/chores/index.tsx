@@ -8,7 +8,7 @@ type mockChore = {
     id: string;
     title: string; 
     description: string;
-    frequencyDats: number;
+    frequencyDays: number;
     weight: number;
     imageUrl?: string;
     audioUrl?: string;
@@ -21,7 +21,7 @@ const mockChores: mockChore[] = [
         id: "1",
         title: "Damma av",
         description: "Damma av alla ytor i vardagsrummet.",
-        frequencyDats: 7,
+        frequencyDays: 7,
         weight: 3,
         isArchived: false,
         assignedTo: "user1",
@@ -30,7 +30,7 @@ const mockChores: mockChore[] = [
         id: "2",
         title: "Dammsuga",
         description: "Dammsuga hela huset.",
-        frequencyDats: 10,
+        frequencyDays: 10,
         weight: 5,
         isArchived: false,
         assignedTo: "user2",
@@ -39,7 +39,7 @@ const mockChores: mockChore[] = [
         id: "3",
         title: "Moppa golven",
         description: "Moppa alla golv i huset.",
-        frequencyDats: 14,
+        frequencyDays: 14,
         weight: 20,
         isArchived: false,
         assignedTo: "user3",
@@ -52,7 +52,7 @@ export default function HouseholdPage() {
     return (
         <View style={{ flex: 1, backgroundColor: theme.colors.background, paddingTop: 20 }}>
             <FlatList data = {mockChores} keyExtractor={(item) => item.id} renderItem={({ item }) => (
-                <Card style={{ margin: 10, borderRadius: 15 }} onPress={() => router.push("/screens/householdpage/choreDetails")}>
+                <Card style={{ margin: 10, borderRadius: 15 }} onPress={() => router.push("/screens/household/chores/chore-details")}>
                     <Card.Title title={item.title}/>
                 </Card>
             )}>

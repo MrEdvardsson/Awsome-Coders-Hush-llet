@@ -63,7 +63,7 @@ export default function Home() {
           renderItem={({ item }) => (
             <Card
               style={styles.householdCard}
-              onPress={() => console.log("Öppnade hushåll:", item.name)}
+              onPress={() => router.push("/screens/household")}
             >
               <Card.Title
                 title={item.name}
