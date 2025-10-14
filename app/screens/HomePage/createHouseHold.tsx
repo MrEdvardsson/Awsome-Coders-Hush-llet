@@ -10,13 +10,35 @@ export default function createHouseHold() {
 
   const [title, setTitle] = useState("");
   const [code, setCode] = useState("");
+  const [loading, setLoading] = useState(false);
 
   const handleGenerateCode = () => {
     const newCode = generateCode();
+    console.log("Genererar kod! " + newCode);
     setCode(newCode);
   };
 
-  console.log("Hej create Household!!");
+  //TODO Skapa HouseholdService
+
+  //   const handleSaveButton = async () => {
+  //     if (!title || !code) {
+  //       alert("Du måste fylla i både titel och kod!");
+  //       return;
+  //     }
+
+  //     setLoading(true);
+  //     try {
+  //       await HouseholdService.createHousehold(title, code);
+  //       alert("✅ Hushållet sparades i Firebase!");
+  //       setTitle("");
+  //       setCode("");
+  //     } catch (error) {
+  //       alert(error.message);
+  //     } finally {
+  //       setLoading(false);
+  //     }
+  //   };
+
   return (
     <SafeAreaView
       style={[styles.safeArea, { backgroundColor: theme.colors.background }]}
@@ -32,7 +54,6 @@ export default function createHouseHold() {
           style={[styles.card, { backgroundColor: theme.custom.cardBg }]}
         >
           <TextInput
-            style={{ borderColor: "none" }}
             label="Titel"
             value={title}
             onChangeText={setTitle}
@@ -58,6 +79,13 @@ export default function createHouseHold() {
             Generera Kod
           </Button>
         </Surface>
+        <Button
+          mode="contained"
+          onPress={() => console.log("Spara!!")}
+          style={{ marginTop: 12 }}
+        >
+          Spara
+        </Button>
       </View>
     </SafeAreaView>
   );
