@@ -1,13 +1,13 @@
 import { AuthCacheListener } from "@/auth";
 import { darkTheme, lightTheme } from "@/constants/app-theme";
-import { auth } from "@/firebase-config";
 import { useReactQuerySetup } from "@/hooks/use-react-query-setup";
-import { signInWithEmailAndPassword } from "@firebase/auth";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import * as SplashScreen from "expo-splash-screen";
+import { signInWithEmailAndPassword } from "firebase/auth";
 import React, { useEffect } from "react";
 import { useColorScheme } from "react-native";
 import { PaperProvider } from "react-native-paper";
+import { auth } from "../firebase-config";
 import RootNavigation from "./root-navigation";
 SplashScreen.preventAutoHideAsync();
 

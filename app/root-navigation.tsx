@@ -1,7 +1,7 @@
-import { useAuthUser } from "../auth";
-import * as SplashScreen from "expo-splash-screen";
 import { Stack } from "expo-router";
+import * as SplashScreen from "expo-splash-screen";
 import { useEffect } from "react";
+import { useAuthUser } from "../auth";
 SplashScreen.preventAutoHideAsync();
 
 export default function RootNavigation() {
@@ -18,13 +18,13 @@ export default function RootNavigation() {
       <Stack.Protected guard={!user}>
         <Stack.Screen name="index" options={{ headerShown: false }} />
         <Stack.Screen
-          name={"screens/loginpage/index"}
+          name={"screens/login/index"}
           options={{ headerShown: false, title: "Logga in" }}
         ></Stack.Screen>
       </Stack.Protected>
       <Stack.Protected guard={user !== null}>
         <Stack.Screen
-          name={"screens/homepage/index"}
+          name={"screens/home/index"}
           options={{ headerShown: false, title: "Hem" }}
         ></Stack.Screen>
       </Stack.Protected>

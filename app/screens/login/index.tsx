@@ -1,13 +1,12 @@
 import { LogInFireBase } from "@/app/_layout";
 import { useAppTheme } from "@/constants/app-theme";
-import { router } from "expo-router";
 import React, { useState } from "react";
 import { Alert, ImageBackground, StyleSheet, View } from "react-native";
 import { Button, Surface, Text, TextInput } from "react-native-paper";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 //Logga in sidan
-export default function LoginPage() {
+export default function Login() {
   const theme = useAppTheme();
 
   const [email, setEmail] = useState("");

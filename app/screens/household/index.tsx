@@ -2,7 +2,7 @@ import { useAppTheme } from "@/constants/app-theme";
 import React from "react";
 import { Text, View } from "react-native";
 
-export default function HouseholdPage() {
+export default function Household() {
   const theme = useAppTheme();
 
   return (
