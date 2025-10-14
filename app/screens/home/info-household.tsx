@@ -14,6 +14,7 @@ import { profileMock } from "../../../src/data/mockdata";
 
 export default function InfoHousehold() {
   const theme = useAppTheme();
+  const isAdmin = true;
 
   //TODO Detta är Admin vy. Måste lägga till gästvy
   return (
@@ -62,86 +63,90 @@ export default function InfoHousehold() {
                     {item.avatar}
                   </Text>
                 )}
-                right={() => (
-                  <TouchableOpacity
-                    onPress={() => console.log("Nu tog du bort " + item.name)}
-                  >
-                    <Ionicons
-                      name="trash"
-                      size={24}
-                      color={theme.colors.onSurface}
-                      style={styles.trashIcon}
-                    />
-                  </TouchableOpacity>
-                )}
+                right={() =>
+                  isAdmin && (
+                    <TouchableOpacity
+                      onPress={() => console.log("Nu tog du bort " + item.name)}
+                    >
+                      <Ionicons
+                        name="trash"
+                        size={24}
+                        color={theme.colors.onSurface}
+                        style={styles.trashIcon}
+                      />
+                    </TouchableOpacity>
+                  )
+                }
               ></Card.Title>
             </Card>
           )}
         ></FlatList>
       </View>
       <View>
-        <FlatList
-          style={[
-            styles.flatlistPending,
-            { backgroundColor: theme.colors.background },
-          ]}
-          data={profileMock.filter((item) => item.isPending)}
-          keyExtractor={(item) => item.id}
-          renderItem={({ item }) => (
-            <Card style={styles.card}>
-              <Card.Title
-                title={item.name}
-                left={() => (
-                  <Text style={{ fontSize: 28, marginLeft: 8 }}>
-                    {item.avatar}
-                  </Text>
-                )}
-                right={() => (
-                  <View style={styles.iconView}>
-                    <TouchableOpacity
-                      onPress={() =>
-                        console.log("Nu accepterade du " + item.name)
-                      }
-                    >
-                      <Ionicons
-                        name="checkmark-sharp"
-                        size={24}
-                        color={"lightgreen"}
-                        style={styles.iconCheckmark}
-                      />
-                    </TouchableOpacity>
-                    <TouchableOpacity
-                      onPress={() =>
-                        Alert.alert(
-                          "Bekräfta åtgärd",
-                          `Vill du verkligen acceptera ${item.name}?`,
-                          [
-                            {
-                              text: "Ja",
-                              onPress: () =>
-                                console.log("Förfrågan accepterad!"),
-                            },
-                            {
-                              text: "Nej",
-                              style: "cancel",
-                            },
-                          ]
-                        )
-                      }
-                    >
-                      <Ionicons
-                        name="close"
-                        size={24}
-                        color={"red"}
-                        style={styles.trashIcon}
-                      />
-                    </TouchableOpacity>
-                  </View>
-                )}
-              ></Card.Title>
-            </Card>
-          )}
-        ></FlatList>
+        {isAdmin && (
+          <FlatList
+            style={[
+              styles.flatlistPending,
+              { backgroundColor: theme.colors.background },
+            ]}
+            data={profileMock.filter((item) => item.isPending)}
+            keyExtractor={(item) => item.id}
+            renderItem={({ item }) => (
+              <Card style={styles.card}>
+                <Card.Title
+                  title={item.name}
+                  left={() => (
+                    <Text style={{ fontSize: 28, marginLeft: 8 }}>
+                      {item.avatar}
+                    </Text>
+                  )}
+                  right={() => (
+                    <View style={styles.iconView}>
+                      <TouchableOpacity
+                        onPress={() =>
+                          console.log("Nu accepterade du " + item.name)
+                        }
+                      >
+                        <Ionicons
+                          name="checkmark-sharp"
+                          size={24}
+                          color={"lightgreen"}
+                          style={styles.iconCheckmark}
+                        />
+                      </TouchableOpacity>
+                      <TouchableOpacity
+                        onPress={() =>
+                          Alert.alert(
+                            "Bekräfta åtgärd",
+                            `Vill du verkligen acceptera ${item.name}?`,
+                            [
+                              {
+                                text: "Ja",
+                                onPress: () =>
+                                  console.log("Förfrågan accepterad!"),
+                              },
+                              {
+                                text: "Nej",
+                                style: "cancel",
+                              },
+                            ]
+                          )
+                        }
+                      >
+                        <Ionicons
+                          name="close"
+                          size={24}
+                          color={"red"}
+                          style={styles.trashIcon}
+                        />
+                      </TouchableOpacity>
+                    </View>
+                  )}
+                ></Card.Title>
+              </Card>
+            )}
+          ></FlatList>
+        )}
       </View>
     </SafeAreaView>
   );
