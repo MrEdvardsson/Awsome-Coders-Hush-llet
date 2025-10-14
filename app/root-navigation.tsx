@@ -24,7 +24,7 @@ export default function RootNavigation() {
       </Stack.Protected>
       <Stack.Protected guard={user !== null}>
         <Stack.Screen
-          name={"screens/housepage/index"}
+          name={"screens/homepage/index"}
           options={{ headerShown: false, title: "Hem" }}
         ></Stack.Screen>
       </Stack.Protected>

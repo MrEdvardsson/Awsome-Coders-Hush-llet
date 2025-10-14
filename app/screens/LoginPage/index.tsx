@@ -1,3 +1,4 @@
+import { LogInFireBase } from "@/app/_layout";
 import { useAppTheme } from "@/constants/app-theme";
 import { router } from "expo-router";
 import React, { useState } from "react";
@@ -15,9 +16,6 @@ export default function LoginPage() {
 
   const handleLogin = () => {
     Alert.alert("Demo", "Login-funktion kommer snart!");
-  };
-  const temporaryFakeLogin = () => {
-    router.push("/screens/HomePage")
   };
 
   const handleRegister = () => {
@@ -97,7 +95,7 @@ export default function LoginPage() {
             </Button>
             <Button
               mode="contained"
-              onPress={temporaryFakeLogin}
+              onPress={LogInFireBase}
               loading={loading}
               disabled={loading}
               style={styles.loginButton}
