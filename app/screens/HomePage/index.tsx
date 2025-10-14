@@ -31,26 +31,16 @@ export default function HouseholdScreen() {
         paddingTop: 20,
       }}
     >
-      <View style={{ flex: 8 }}>
-        <FlatList
-          style={{ height: "75%" }}
-          data={mockHouseholds} // Mockdata, här ska den inloggade personens hushåll läsas
-          keyExtractor={(item) => item.id}
-          renderItem={({ item }) => (
-            <Card
-              style={{ margin: 10, borderRadius: 15 }}
-              onPress={() => router.push("/screens/HouseholdPage")}
-            >
-              <Card.Title
-                title={item.name}
-                subtitle={`Kod: ${item.generatedCode}`}
-                left={(props) => <List.Icon {...props} icon="home" />}
-              />
-            </Card>
-          )}
-        />
-      </View>
-      <View
+      <TouchableOpacity onPress={() => router.push("/screens/housepage")}>
+        <Text
+          style={{
+            color: theme.colors.onPrimary,
+          }}
+        >
+          Välj hushåll
+        </Text>
+      </TouchableOpacity>
+      <TouchableOpacity
         style={{
           flex: 1,
           padding: 10,
@@ -61,6 +51,7 @@ export default function HouseholdScreen() {
           justifyContent: "space-between",
           alignItems: "center",
         }}
+        onPress={() => router.push("/screens/loginpage")}
       >
         <Card
           style={{
