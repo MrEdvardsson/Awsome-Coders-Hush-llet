@@ -1,7 +1,7 @@
 import { useAppTheme } from "@/constants/app-theme";
 import generateCode from "@/utils/generateCode";
 import { useState } from "react";
-import { StyleSheet, View } from "react-native";
+import { Alert, StyleSheet, View } from "react-native";
 import { Button, Surface, Text, TextInput } from "react-native-paper";
 import { SafeAreaView } from "react-native-safe-area-context";
 
@@ -81,7 +81,7 @@ export default function createHouseHold() {
         </Surface>
         <Button
           mode="contained"
-          onPress={() => console.log("Spara!!")}
+          onPress={() => Alert.alert("Spara till databas kommer strax!")}
           style={{ marginTop: 12 }}
         >
           Spara

@@ -77,16 +77,9 @@ export default function householdScreen() {
       <View style={styles.footer}>
         <Card
           style={styles.footerCard}
-          onPress={() => router.push("/screens/HomePage/createHouseHold")}
+          onPress={() => router.push("/screens/homepage/createHouseHold")}
         >
-          <Card.Content
-            style={{
-              flexDirection: "row",
-              justifyContent: "space-between",
-              alignItems: "center",
-              padding: 10,
-            }}
-          >
+          <Card.Content style={styles.footerCardContent}>
             <Text variant="titleMedium">Lägg till</Text>
             <List.Icon icon="plus" />
           </Card.Content>
