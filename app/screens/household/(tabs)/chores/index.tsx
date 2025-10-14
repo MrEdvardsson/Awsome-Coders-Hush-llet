@@ -22,7 +22,7 @@ const mockChores: mockChore[] = [
     title: "Damma av",
     description: "Damma av alla ytor i vardagsrummet.",
     frequencyDays: 7,
-    weight: 3,
+    weight: 4,
     isArchived: false,
     assignedTo: "user1",
   },
@@ -31,7 +31,7 @@ const mockChores: mockChore[] = [
     title: "Dammsuga",
     description: "Dammsuga hela huset.",
     frequencyDays: 10,
-    weight: 5,
+    weight: 6,
     isArchived: false,
     assignedTo: "user2",
   },
@@ -40,7 +40,7 @@ const mockChores: mockChore[] = [
     title: "Moppa golven",
     description: "Moppa alla golv i huset.",
     frequencyDays: 14,
-    weight: 20,
+    weight: 10,
     isArchived: false,
     assignedTo: "user3",
   },
@@ -50,31 +50,22 @@ export default function HouseholdPage() {
   const theme = useAppTheme();
 
   return (
-    <View
-      style={{
-        flex: 1,
-        backgroundColor: theme.colors.background,
-        paddingTop: 30,
-      }}
-    >
+    <View style={{ flex: 1, backgroundColor: theme.colors.background, paddingTop: 30 }}>
       <FlatList
         data={mockChores}
         keyExtractor={(item) => item.id}
         renderItem={({ item }) => (
           <Card
             style={styles.card}
-            onPress={() =>
-              router.push("/screens/household/chores/chore-details")
-            }
+            onPress={() => router.push("/screens/household/chores/chore-details")}
           >
-            <Card.Title
-              title={item.title}
-              right={() => (
-                <View style={styles.daysCircle}>
-                  <Text style={styles.daysText}>{item.frequencyDays}</Text>
-                </View>
-              )}
-            />
+            <View style={styles.cardContent}>
+              <Text style={styles.titleText}>{item.title}</Text>
+
+              <View style={styles.daysCircle}>
+                <Text style={styles.daysText}>{item.frequencyDays}</Text>
+              </View>
+            </View>
           </Card>
         )}
       />
@@ -96,33 +87,49 @@ const styles = StyleSheet.create({
     marginVertical: 8,
     borderRadius: 15,
     elevation: 2,
+    backgroundColor: "#fff",
+  },
+  cardContent: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    paddingVertical: 18,
+    paddingHorizontal: 20,
+  },
+  titleText: {
+    flex: 1,
+    fontSize: 18,
+    fontWeight: "700",
+    color: "#1e293b",
+    letterSpacing: 0.5,
   },
   daysCircle: {
-    width: 30,
-    height: 30,
+    width: 34,
+    height: 34,
     borderRadius: 20,
     backgroundColor: "#e6e8ebff",
     alignItems: "center",
     justifyContent: "center",
-    marginRight: 16,
+    marginLeft: 10,
     borderWidth: 1,
-    borderColor: "#e6e8ebff"
+    borderColor: "#d1d5db",
   },
   daysText: {
-    fontSize: 16,
+    fontSize: 15,
     fontWeight: "600",
+    color: "#334155",
   },
   floatingButton: {
     position: "absolute",
-    bottom: 30, 
+    bottom: 35, // 👉 flytta upp/ner här om du vill
     alignSelf: "center",
     width: 70,
     height: 70,
     borderRadius: 35,
-    backgroundColor: "#2563eb", 
+    backgroundColor: "#2563eb",
     alignItems: "center",
     justifyContent: "center",
-    elevation: 5,
+    elevation: 6,
     shadowColor: "#000",
     shadowOpacity: 0.25,
     shadowRadius: 6,
