@@ -1,4 +1,3 @@
-import { LogInFireBase } from "@/app/_layout";
 import { useAppTheme } from "@/constants/app-theme";
 import { router } from "expo-router";
 import React, { useState } from "react";
@@ -12,22 +11,64 @@ import {
 } from "react-native";
 import { Button, Surface, Text, TextInput } from "react-native-paper";
 import { SafeAreaView } from "react-native-safe-area-context";
+import registerService from "../../../src/services/registerService";
 
-//Logga in sidan
-export default function Login() {
+export default function Register() {
   const theme = useAppTheme();
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
   const [loading, setLoading] = useState(false);
 
-  const handleLogin = () => {
-    Alert.alert("Demo", "Login-funktion kommer snart!");
+  const handleRegister = () => {
+    if (!email || !password || !confirmPassword) {
+      Alert.alert("Fel", "Fyll i alla fält!");
+      return;
+    }
+    if (password !== confirmPassword) {
+      Alert.alert("Fel", "Lösenorden matchar inte!");
+      return;
+    }
+
+    setLoading(true);
+    registerService
+      .registerWithEmail(email, password)
+      .then(() => {
+        Alert.alert(
+          "Kontot skapat! 🎉",
+          "Ditt konto har skapats och du är nu inloggad.",
+          [
+            {
+              text: "OK",
+              onPress: () => router.replace("/screens/home"),
+            },
+          ]
+        );
+      })
+      .catch((err: any) => {
+        console.error("Registrreringsfel:", err);
+        // https://firebase.google.com/docs/reference/js/auth#autherrorcodes för den nyfikna!
+        let errorMessage = "Nånting gick fel. Försök igen.";
+        if (err.code === "auth/email-already-in-use") {
+          errorMessage =
+            "Den här e-postadressen är redan registrerad. Försök logga in istället.";
+        } else if (err.code === "auth/invalid-email") {
+          errorMessage =
+            "Ogiltig e-postadress. Kontrollera och försök igen. På riktigt?";
+        } else if (err.code === "auth/weak-password") {
+          errorMessage = "Lösenordet är för weaaak. Använd minst 6 tecken.";
+        } else if (err.code === "auth/network-request-failed") {
+          errorMessage = "Nätverksfel. Någon kanske pratar i telefon?";
+        } else if (err.message) {
+          errorMessage = err.message;
+        }
+
+        Alert.alert("Woops! 😪", errorMessage);
+      })
+      .finally(() => setLoading(false));
   };
 
-  const handleRegister = () => {
-    router.push("/screens/login/register");
-  };
   return (
     <ImageBackground
       source={require("../../../assets/images/n4.jpg")}
@@ -43,13 +84,12 @@ export default function Login() {
           <View style={styles.content}>
             <View style={styles.header}>
               <Text variant="displayMedium" style={styles.title}>
-                Hushållet
+                Skapa konto
               </Text>
               <Text variant="bodyLarge" style={styles.subtitle}>
-                Logga in eller registrera konto
+                Fyll i din e-post och välj lösenord
               </Text>
             </View>
-
             <Surface
               style={[
                 styles.formContainer,
@@ -68,13 +108,6 @@ export default function Login() {
                   { backgroundColor: theme.colors.background },
                 ]}
                 left={<TextInput.Icon icon="email" />}
-                theme={{
-                  colors: {
-                    primary: theme.colors.primary,
-                    background: theme.colors.background,
-                    onSurface: theme.colors.onSurface,
-                  },
-                }}
               />
 
               <TextInput
@@ -82,41 +115,27 @@ export default function Login() {
                 value={password}
                 onChangeText={setPassword}
                 secureTextEntry
+                autoCapitalize="none"
                 style={[
                   styles.input,
                   { backgroundColor: theme.colors.background },
                 ]}
                 left={<TextInput.Icon icon="lock" />}
-                theme={{
-                  colors: {
-                    primary: theme.colors.primary,
-                    background: theme.colors.background,
-                    onSurface: theme.colors.onSurface,
-                  },
-                }}
+              />
+              <TextInput
+                label="Bekräfta lösenord"
+                value={confirmPassword}
+                onChangeText={setConfirmPassword}
+                secureTextEntry
+                autoCapitalize="none"
+                style={[
+                  styles.input,
+                  { backgroundColor: theme.colors.background },
+                ]}
+                left={<TextInput.Icon icon="lock" />}
               />
               <Button
                 mode="contained"
-                onPress={handleLogin}
-                loading={loading}
-                disabled={loading}
-                style={styles.loginButton}
-                contentStyle={styles.buttonContent}
-              >
-                Logga in
-              </Button>
-              <Button
-                mode="contained"
-                onPress={LogInFireBase}
-                loading={loading}
-                disabled={loading}
-                style={styles.loginButton}
-                contentStyle={styles.buttonContent}
-              >
-                Fejk-inloggning på Alex konto
-              </Button>
-              <Button
-                mode="outlined"
                 onPress={handleRegister}
                 loading={loading}
                 disabled={loading}
@@ -168,12 +187,9 @@ const styles = StyleSheet.create({
   input: {
     marginBottom: 16,
   },
-  loginButton: {
+  registerButton: {
     marginTop: 8,
     marginBottom: 12,
-  },
-  registerButton: {
-    marginBottom: 8,
   },
   buttonContent: {
     paddingVertical: 8,
