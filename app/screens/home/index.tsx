@@ -2,7 +2,7 @@ import { useAppTheme } from "@/constants/app-theme";
 // import { getAuth } from "firebase/auth";
 import { router } from "expo-router";
 import React from "react";
-import { FlatList, StyleSheet, View } from "react-native";
+import { FlatList, StyleSheet, TouchableOpacity, View } from "react-native";
 import { Card, List, Text } from "react-native-paper";
 import { mockHouseholds } from "../../../src/data/mockdata";
 
@@ -69,6 +69,15 @@ export default function Home() {
                 title={item.name}
                 subtitle={`Kod: ${item.generatedCode}`}
                 left={(props) => <List.Icon {...props} icon="home" />}
+                right={(props) => (
+                  <TouchableOpacity
+                    onPress={() => router.push("/screens/home/info-household")}
+                  >
+                    <View style={{ marginRight: 8 }}>
+                      <List.Icon {...props} icon="information-outline" />
+                    </View>
+                  </TouchableOpacity>
+                )}
               />
             </Card>
           )}

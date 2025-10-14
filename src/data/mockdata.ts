@@ -54,3 +54,30 @@ export const mockHouseholds = [
 export default function mock() {
   return mockHouseholds;
 }
+
+export const profileMock = [
+  {
+    id: "1",
+    name: "Rudolf",
+    avatar: "🐦",
+    isPending: false,
+  },
+  {
+    id: "2",
+    name: "Karin",
+    avatar: "🤖",
+    isPending: false,
+  },
+  {
+    id: "3",
+    name: "Patrik",
+    avatar: "🌞",
+    isPending: true,
+  },
+  {
+    id: "4",
+    name: "Karl",
+    avatar: "💩",
+    isPending: true,
+  },
+];
