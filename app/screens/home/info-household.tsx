@@ -1,4 +1,5 @@
 import { useAppTheme } from "@/constants/app-theme";
+import generateCode from "@/utils/generateCode";
 import { Ionicons } from "@expo/vector-icons";
 import { router } from "expo-router";
 import { useState } from "react";
@@ -9,14 +10,25 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
-import { Card, Text, TextInput } from "react-native-paper";
+import { Button, Card, Text, TextInput } from "react-native-paper";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { profileMock } from "../../../src/data/mockdata";
 
 export default function InfoHousehold() {
   const theme = useAppTheme();
-  const [titel, setTitel] = useState("");
+  const [title, setTitle] = useState("");
+  const [code, setCode] = useState("");
   const isAdmin = true;
+
+  const handleGenerateCode = () => {
+    const newCode = generateCode();
+    console.log("Genererar kod! " + newCode);
+    setCode(newCode);
+  };
+
+  const handleSetTitle = () => {
+    const newTitle = setTitle(title);
+  };
 
   return (
     <SafeAreaView style={{ backgroundColor: theme.colors.background }}>
@@ -43,9 +55,40 @@ export default function InfoHousehold() {
         </Text>
       </View>
       <View
-        style={[styles.houseCode, { backgroundColor: theme.colors.primary }]}
+        style={{
+          flexDirection: "row",
+          alignItems: "center",
+          justifyContent: "center",
+          marginHorizontal: 10,
+          marginVertical: 12,
+          backgroundColor: theme.colors.tertiary,
+          borderRadius: 12,
+          paddingRight: 12,
+        }}
       >
-        <Text variant="titleLarge">HushållsKod</Text>
+        <View
+          style={[styles.houseCode, { backgroundColor: theme.colors.tertiary }]}
+        >
+          <Text
+            variant="titleLarge"
+            style={{
+              backgroundColor: theme.colors.tertiary,
+              textAlign: "center",
+            }}
+          >
+            {code || "Ingen Kod hittades"}
+          </Text>
+        </View>
+        {isAdmin && (
+          <Button
+            mode="contained"
+            onPress={handleGenerateCode}
+            buttonColor={theme.colors.primary}
+            textColor={theme.colors.onPrimary}
+          >
+            Skapa ny kod
+          </Button>
+        )}
       </View>
       <View>
         {isAdmin && (
@@ -58,19 +101,32 @@ export default function InfoHousehold() {
                 paddingTop: 5,
               }}
             >
-              Ange ny titel
+              Ange ny titel:
             </Text>
-            <Card style={styles.titleInput}>
-              <TextInput
-                mode="outlined"
-                placeholder={titel || "Här kommer hushållets namn att synas"}
-                value={titel}
-                onChangeText={setTitel}
-                style={{ backgroundColor: theme.colors.surface }}
-                outlineColor={theme.colors.outline}
-                activeOutlineColor={theme.colors.primary}
-              />
-            </Card>
+            <View style={styles.titleInputRow}>
+              <Card style={[styles.titleInput, { flex: 3 }]}>
+                <TextInput
+                  mode="outlined"
+                  placeholder={title || "Här kommer hushållets namn att synas"}
+                  value={title}
+                  onChangeText={setTitle}
+                  style={{ backgroundColor: theme.colors.surface }}
+                  outlineColor={theme.colors.outline}
+                  activeOutlineColor={theme.colors.primary}
+                />
+              </Card>
+              <TouchableOpacity
+                style={[
+                  styles.toucheableSaveButton,
+                  { backgroundColor: theme.colors.primary },
+                ]}
+                onPress={() => handleSetTitle()}
+              >
+                <Text variant="titleMedium" style={{ color: "white" }}>
+                  Spara
+                </Text>
+              </TouchableOpacity>
+            </View>
           </View>
         )}
       </View>
@@ -205,9 +261,10 @@ const styles = StyleSheet.create({
     borderRadius: 15,
   },
   houseCode: {
-    alignItems: "center",
-    justifyContent: "center",
-    height: "12%",
+    flex: 1, // tar upp tillgänglig plats
+    paddingRight: 12,
+    borderRadius: 12,
+    paddingVertical: 12,
   },
   trashIcon: {
     margin: 10,
@@ -226,5 +283,18 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.15,
     shadowRadius: 4,
     shadowOffset: { width: 0, height: 2 },
+  },
+  titleInputRow: {
+    flexDirection: "row",
+    justifyContent: "center",
+  },
+  toucheableSaveButton: {
+    flex: 1,
+    height: "auto",
+    borderRadius: 25,
+    alignItems: "center",
+    justifyContent: "center",
+    marginRight: 8,
+    marginBottom: 20,
   },
 });

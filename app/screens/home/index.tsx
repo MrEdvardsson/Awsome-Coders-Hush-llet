@@ -83,30 +83,16 @@ export default function Home() {
                   />
                 )}
                 right={() => (
-                  <View style={styles.iconView}>
-                    <TouchableOpacity
-                      onPress={() =>
-                        router.push("/screens/home/info-household")
-                      }
-                    >
-                      <Ionicons
-                        name="information-circle-outline"
-                        size={24}
-                        color={theme.colors.onBackground}
-                      />
-                    </TouchableOpacity>
-                    <TouchableOpacity
-                      onPress={() =>
-                        router.push("/screens/home/settings-household")
-                      }
-                    >
-                      <Ionicons
-                        name="pencil"
-                        size={20}
-                        color={theme.colors.onBackground}
-                      />
-                    </TouchableOpacity>
-                  </View>
+                  <TouchableOpacity
+                    onPress={() => router.push("/screens/home/info-household")}
+                  >
+                    <Ionicons
+                      name="information-circle-outline"
+                      size={24}
+                      color={theme.colors.onBackground}
+                      style={{ paddingRight: 12 }}
+                    />
+                  </TouchableOpacity>
                 )}
               />
             </Card>
