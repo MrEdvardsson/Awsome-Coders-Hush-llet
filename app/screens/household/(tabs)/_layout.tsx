@@ -1,6 +1,6 @@
 import { Tabs } from "expo-router";
 import { useAppTheme } from "@/constants/app-theme";
-import { List } from "react-native-paper";
+import { Ionicons } from "@expo/vector-icons";
 
 export default function HouseholdLayout() {
     const theme = useAppTheme();
@@ -10,14 +10,22 @@ export default function HouseholdLayout() {
         <Tabs screenOptions={
             { 
                 headerTitleAlign: "center",
-                tabBarActiveTintColor: theme.colors.primary,
-                tabBarStyle: { backgroundColor: theme.colors.surface, borderTopColor: theme.colors.primary },
+                tabBarActiveTintColor: theme.colors.onPrimary,
+                tabBarStyle: { backgroundColor: theme.colors.primary},
                 tabBarLabelStyle: { fontSize: 14, fontWeight: "bold" },
             }
         }
         >
-            <Tabs.Screen name="chores" options={{ title: "Hushåll", headerShown: false }}/>
-            <Tabs.Screen name="statistics" options={{ title: "Statistik", headerShown: false}}/>
+            <Tabs.Screen name="chores" options={{ title: "Hushåll", headerShown: false, tabBarIcon: ({ color, size }) => (
+            <Ionicons name="list" color={color} size={size} />
+        ), 
+          }}
+          />
+            <Tabs.Screen name="statistics" options={{ title: "Statistik", headerShown: false, tabBarIcon: ({ color, size }) => (
+            <Ionicons name="stats-chart" color={color} size={size} />
+          ),
+           }}
+           />
         </Tabs>
     );
 }
