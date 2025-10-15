@@ -26,7 +26,7 @@ export default function JoinHousehold() {
     <SafeAreaView
       style={[styles.container, { backgroundColor: theme.colors.background }]}
     >
-      <View
+      {/* <View
         style={[styles.header, { borderBottomColor: theme.colors.outline }]}
       >
         <TouchableOpacity
@@ -42,7 +42,7 @@ export default function JoinHousehold() {
         <Text variant="headlineSmall" style={{ color: theme.colors.onSurface }}>
           Gå med i hushåll
         </Text>
-      </View>
+      </View> */}
 
       <ScrollView style={styles.content}>
         <View style={styles.section}>
