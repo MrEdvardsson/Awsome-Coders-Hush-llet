@@ -1,29 +1,49 @@
-import { LogInFireBase } from "@/app/_layout";
 import { useAppTheme } from "@/constants/app-theme";
+import { getLoginError, signInUser, validateLogin } from "@/src/services/loginService";
+import { useMutation } from "@tanstack/react-query";
 import { router } from "expo-router";
 import React, { useState } from "react";
 import {
-  Alert,
   ImageBackground,
   KeyboardAvoidingView,
   Platform,
   StyleSheet,
-  View,
+  View
 } from "react-native";
 import { Button, Surface, Text, TextInput } from "react-native-paper";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { automaticEmail } from "../../../firebase-config";
 
 //Logga in sidan
 export default function Login() {
   const theme = useAppTheme();
+  const [email, setEmail] = useState(automaticEmail.email);
+  const [password, setPassword] = useState(automaticEmail.password);
+  const [error, setError] = useState<string | null>(null);
 
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [loading, setLoading] = useState(false);
+  const mutation = useMutation({
+    mutationFn: signInUser,
+    onSuccess: () => {
+      setError(null);
+      router.replace("/screens/home");
+    },
+    onError: (error: any) => {
+      const errorMessage = error?.code ? getLoginError(error.code) : "Ett fel uppstod vid inloggning";
+      setError(errorMessage);
+    }
+  });
 
   const handleLogin = () => {
-    Alert.alert("Demo", "Login-funktion kommer snart!");
-  };
+    setError(null);
+
+    const validationError = validateLogin(email, password);
+    if (validationError) {
+      setError(validationError);
+      return;
+    }
+
+    mutation.mutate({ email, password });
+  }
 
   const handleRegister = () => {
     router.push("/screens/login/register");
@@ -76,7 +96,6 @@ export default function Login() {
                   },
                 }}
               />
-
               <TextInput
                 label="Lösenord"
                 value={password}
@@ -95,31 +114,26 @@ export default function Login() {
                   },
                 }}
               />
+              {error && (
+                <Text style={[styles.errorText, { color: theme.colors.error }]}>
+                  {error}
+                </Text>
+              )}
               <Button
                 mode="contained"
                 onPress={handleLogin}
-                loading={loading}
-                disabled={loading}
+                loading={mutation.isPending}
+                disabled={mutation.isPending}
                 style={styles.loginButton}
                 contentStyle={styles.buttonContent}
               >
                 Logga in
               </Button>
               <Button
-                mode="contained"
-                onPress={LogInFireBase}
-                loading={loading}
-                disabled={loading}
-                style={styles.loginButton}
-                contentStyle={styles.buttonContent}
-              >
-                Fejk-inloggning på Alex konto
-              </Button>
-              <Button
                 mode="outlined"
                 onPress={handleRegister}
-                loading={loading}
-                disabled={loading}
+                loading={mutation.isPending}
+                disabled={mutation.isPending}
                 style={styles.registerButton}
                 contentStyle={styles.buttonContent}
               >
@@ -177,5 +191,10 @@ const styles = StyleSheet.create({
   },
   buttonContent: {
     paddingVertical: 8,
+  },
+  errorText: {
+    fontSize: 14,
+    marginBottom: 12,
+    marginTop: -8,
   },
 });

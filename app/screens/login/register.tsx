@@ -1,17 +1,17 @@
 import { useAppTheme } from "@/constants/app-theme";
+import { registerHandler } from "@/src/services/registerService";
 import { router } from "expo-router";
 import React, { useState } from "react";
 import {
-  Alert,
   ImageBackground,
   KeyboardAvoidingView,
   Platform,
   StyleSheet,
-  View,
+  View
 } from "react-native";
 import { Button, Surface, Text, TextInput } from "react-native-paper";
 import { SafeAreaView } from "react-native-safe-area-context";
-import registerService from "../../../src/services/registerService";
+import Toast from 'react-native-toast-message';
 
 export default function Register() {
   const theme = useAppTheme();
@@ -20,53 +20,28 @@ export default function Register() {
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
-  const handleRegister = () => {
-    if (!email || !password || !confirmPassword) {
-      Alert.alert("Fel", "Fyll i alla fält!");
-      return;
-    }
-    if (password !== confirmPassword) {
-      Alert.alert("Fel", "Lösenorden matchar inte!");
-      return;
-    }
-
+  const handleRegister = async () => {
     setLoading(true);
-    registerService
-      .registerWithEmail(email, password)
-      .then(() => {
-        Alert.alert(
-          "Kontot skapat! 🎉",
-          "Ditt konto har skapats och du är nu inloggad.",
-          [
-            {
-              text: "OK",
-              onPress: () => router.replace("/screens/home"),
-            },
-          ]
-        );
-      })
-      .catch((err: any) => {
-        console.error("Registrreringsfel:", err);
-        // https://firebase.google.com/docs/reference/js/auth#autherrorcodes för den nyfikna!
-        let errorMessage = "Nånting gick fel. Försök igen.";
-        if (err.code === "auth/email-already-in-use") {
-          errorMessage =
-            "Den här e-postadressen är redan registrerad. Försök logga in istället.";
-        } else if (err.code === "auth/invalid-email") {
-          errorMessage =
-            "Ogiltig e-postadress. Kontrollera och försök igen. På riktigt?";
-        } else if (err.code === "auth/weak-password") {
-          errorMessage = "Lösenordet är för weaaak. Använd minst 6 tecken.";
-        } else if (err.code === "auth/network-request-failed") {
-          errorMessage = "Nätverksfel. Någon kanske pratar i telefon?";
-        } else if (err.message) {
-          errorMessage = err.message;
-        }
+    setError(null);
 
-        Alert.alert("Woops! 😪", errorMessage);
-      })
-      .finally(() => setLoading(false));
+    const result = await registerHandler(email, password, confirmPassword);
+
+    if (result.success) {
+      Toast.show({
+        type: 'success',
+        text1: 'Registrering lyckad!',
+        text2: 'Ditt konto har skapats och du loggas nu in..',
+        visibilityTime: 3000,
+        onHide: () => {
+          router.replace("/screens/home");
+        }
+      });
+    } else {
+      setError(result.error!);
+    }
+    setLoading(false);
   };
 
   return (
@@ -134,6 +109,11 @@ export default function Register() {
                 ]}
                 left={<TextInput.Icon icon="lock" />}
               />
+              {error && (
+                <Text style={[styles.errorText, { color: theme.colors.error }]}>
+                  {error}
+                </Text>
+              )}
               <Button
                 mode="contained"
                 onPress={handleRegister}
@@ -193,5 +173,10 @@ const styles = StyleSheet.create({
   },
   buttonContent: {
     paddingVertical: 8,
+  },
+  errorText: {
+    fontSize: 14,
+    marginBottom: 12,
+    marginTop: -8,
   },
 });

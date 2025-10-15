@@ -7,9 +7,10 @@ import { signInWithEmailAndPassword } from "firebase/auth";
 import React, { useEffect } from "react";
 import { useColorScheme } from "react-native";
 import { PaperProvider } from "react-native-paper";
+import { MenuProvider } from "react-native-popup-menu";
+import Toast from 'react-native-toast-message';
 import { auth } from "../firebase-config";
 import RootNavigation from "./root-navigation";
-import { MenuProvider } from "react-native-popup-menu";
 SplashScreen.preventAutoHideAsync();
 
 const queryClient = new QueryClient({
@@ -41,6 +42,7 @@ export default function RootLayout() {
           <AuthCacheListener />
           {/*Navigerar till rätt sida baserat på autentisering*/}
           <RootNavigation />
+          <Toast />
         </MenuProvider>
       </PaperProvider>
     </QueryClientProvider>
