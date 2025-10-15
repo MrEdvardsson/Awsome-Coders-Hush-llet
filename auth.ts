@@ -28,6 +28,7 @@ export function useAuthUser() {
   });
   return query;
 }
+
 // En komponent som lyssnar på authentication förändringar tex vid inloggning och utloggning
 export function AuthCacheListener() {
   const queryClient = useQueryClient();
@@ -35,6 +36,7 @@ export function AuthCacheListener() {
     const unsubscribe = onAuthStateChanged(auth, (user) => {
       const value = user ? user : null;
       queryClient.setQueryData(AUTH_KEY, value);
+      queryClient.invalidateQueries();
     });
     return () => unsubscribe();
   }, [queryClient]);

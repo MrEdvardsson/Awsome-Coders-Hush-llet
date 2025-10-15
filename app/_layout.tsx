@@ -9,6 +9,7 @@ import { useColorScheme } from "react-native";
 import { PaperProvider } from "react-native-paper";
 import { auth } from "../firebase-config";
 import RootNavigation from "./root-navigation";
+import { MenuProvider } from "react-native-popup-menu";
 SplashScreen.preventAutoHideAsync();
 
 const queryClient = new QueryClient();
@@ -26,10 +27,12 @@ export default function RootLayout() {
   return (
     <QueryClientProvider client={queryClient}>
       <PaperProvider theme={theme}>
-        {/* En komponent som lyssnar på auth förändringar */}
-        <AuthCacheListener />
-        {/*Navigerar till rätt sida baserat på autentisering*/}
-        <RootNavigation />
+        <MenuProvider>
+          {/* En komponent som lyssnar på auth förändringar */}
+          <AuthCacheListener />
+          {/*Navigerar till rätt sida baserat på autentisering*/}
+          <RootNavigation />
+        </MenuProvider>
       </PaperProvider>
     </QueryClientProvider>
   );
