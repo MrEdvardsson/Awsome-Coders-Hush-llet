@@ -51,7 +51,7 @@ export default function CreateHousehold() {
       </Text>
       <View style={styles.form}>
         <Surface
-          style={[styles.card, { backgroundColor: theme.custom.cardBg }]}
+          style={[styles.card, { backgroundColor: theme.colors.background }]}
         >
           <TextInput
             label="Titel"
