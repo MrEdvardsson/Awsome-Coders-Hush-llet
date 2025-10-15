@@ -13,7 +13,7 @@ type mockChore = {
   imageUrl?: string;
   audioUrl?: string;
   isArchived: boolean;
-  assignedTo: string; // Profile
+  assignedTo?: string; // Profile
 };
 
 const mockChores: mockChore[] = [
@@ -41,8 +41,7 @@ const mockChores: mockChore[] = [
     description: "Moppa alla golv i huset.",
     frequencyDays: 14,
     weight: 10,
-    isArchived: false,
-    assignedTo: "user3",
+    isArchived: false
   },
 ];
 
@@ -57,7 +56,19 @@ export default function HouseholdPage() {
         renderItem={({ item }) => (
           <Card
             style={styles.card}
-            onPress={() => router.push("/screens/household/chores/chore-details")}
+            onPress={() =>
+              router.push({
+                pathname: "/screens/household/chores/chore-details",
+                params: {
+                  id: item.id,
+                  title: item.title,
+                  description: item.description,
+                  frequencyDays: item.frequencyDays.toString(),
+                  weight: item.weight.toString(),
+                  assignedTo: item.assignedTo,
+                },
+              })
+            }
           >
             <View style={styles.cardContent}>
               <Text style={styles.titleText}>{item.title}</Text>
@@ -70,8 +81,13 @@ export default function HouseholdPage() {
         )}
       />
 
+      
       <TouchableOpacity
-        style={styles.floatingButton}
+      //TODO ska bara visas om man är admin för hushållet
+        style={[
+          styles.floatingButton,
+          { backgroundColor: theme.colors.secondary },
+        ]}
         onPress={() => router.push("/screens/household/chores/add-chore")}
         activeOpacity={0.8}
       >
@@ -121,7 +137,7 @@ const styles = StyleSheet.create({
   },
   floatingButton: {
     position: "absolute",
-    bottom: 35, // 👉 flytta upp/ner här om du vill
+    bottom: 35,
     alignSelf: "center",
     width: 70,
     height: 70,
