@@ -1,6 +1,6 @@
 import { useAppTheme } from "@/constants/app-theme";
-import { router } from "expo-router";
-import React from "react";
+import { router, useFocusEffect, useNavigation } from "expo-router";
+import React, { useCallback} from "react";
 import { FlatList, StyleSheet, TouchableOpacity, View } from "react-native";
 import { Card, Text } from "react-native-paper";
 
@@ -41,15 +41,30 @@ const mockChores: mockChore[] = [
     description: "Moppa alla golv i huset.",
     frequencyDays: 14,
     weight: 10,
-    isArchived: false
+    isArchived: false,
   },
 ];
 
 export default function HouseholdPage() {
   const theme = useAppTheme();
+  const nav = useNavigation();
+  const rootStack = nav.getParent()?.getParent();
+
+  useFocusEffect(
+    useCallback(() => {
+      rootStack?.setOptions({ headerShown: true });
+      return () => rootStack?.setOptions({ headerShown: false });
+    }, [rootStack])
+  );
 
   return (
-    <View style={{ flex: 1, backgroundColor: theme.colors.background, paddingTop: 30 }}>
+    <View
+      style={{
+        flex: 1,
+        backgroundColor: theme.colors.background,
+        paddingTop: 30,
+      }}
+    >
       <FlatList
         data={mockChores}
         keyExtractor={(item) => item.id}
@@ -81,9 +96,8 @@ export default function HouseholdPage() {
         )}
       />
 
-      
       <TouchableOpacity
-      //TODO ska bara visas om man är admin för hushållet
+        //TODO ska bara visas om man är admin för hushållet
         style={[
           styles.floatingButton,
           { backgroundColor: theme.colors.secondary },
