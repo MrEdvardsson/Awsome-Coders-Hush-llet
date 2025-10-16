@@ -1,13 +1,15 @@
+import { useAuthUser } from "@/auth";
 import { useAppTheme } from "@/constants/app-theme";
+import { AddHousehold } from "@/src/data/household-db";
 import generateCode from "@/utils/generateCode";
 import { useState } from "react";
-import { Alert, StyleSheet, View } from "react-native";
+import { StyleSheet, View } from "react-native";
 import { Button, Surface, Text, TextInput } from "react-native-paper";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 export default function CreateHousehold() {
   const theme = useAppTheme();
-
+  const { data: user } = useAuthUser();
   const [title, setTitle] = useState("");
   const [code, setCode] = useState("");
   const [loading, setLoading] = useState(false);
@@ -18,26 +20,25 @@ export default function CreateHousehold() {
     setCode(newCode);
   };
 
-  //TODO Skapa HouseholdService
+  const handleSaveButton = async () => {
+    console.log("du tryckte på spara!");
+    if (!title || !code) {
+      alert("Du måste fylla i både titel och kod!");
+      return;
+    }
 
-  //   const handleSaveButton = async () => {
-  //     if (!title || !code) {
-  //       alert("Du måste fylla i både titel och kod!");
-  //       return;
-  //     }
-
-  //     setLoading(true);
-  //     try {
-  //       await HouseholdService.createHousehold(title, code);
-  //       alert("✅ Hushållet sparades i Firebase!");
-  //       setTitle("");
-  //       setCode("");
-  //     } catch (error) {
-  //       alert(error.message);
-  //     } finally {
-  //       setLoading(false);
-  //     }
-  //   };
+    setLoading(true);
+    try {
+      await AddHousehold({ title, code });
+      alert("✅ Hushållet sparades i Firebase!");
+      setTitle("");
+      setCode("");
+    } catch (error) {
+      alert(error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
     <SafeAreaView
@@ -81,7 +82,7 @@ export default function CreateHousehold() {
         </Surface>
         <Button
           mode="contained"
-          onPress={() => Alert.alert("Spara till databas kommer strax!")}
+          onPress={handleSaveButton}
           style={{ marginTop: 12 }}
         >
           Spara
