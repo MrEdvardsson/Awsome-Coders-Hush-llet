@@ -5,6 +5,7 @@ import {
   collection,
   doc,
   getDocs,
+  onSnapshot,
   query,
   serverTimestamp,
   setDoc,
@@ -22,11 +23,29 @@ interface Profile {
   selectedAvatar: string;
 }
 
-interface GetHousehold {
+export interface GetHousehold {
   id: string;
   title: string;
   code: string;
-  members: { uid: string; profileName: string; isOwner: boolean }[];
+  members: {
+    id: string;
+    profileName: string;
+    isOwner: boolean;
+    selectedAvatar: string;
+    uid: string;
+    isPending: boolean;
+  }[];
+}
+
+interface UpdateCode {
+  code: string;
+  newCode: string;
+}
+
+interface UpdateTitle {
+  code: string;
+  title: string;
+  newTitle: string;
 }
 
 export async function AddHousehold(
@@ -75,15 +94,75 @@ export async function AddHousehold(
 }
 
 export async function GetHouseholds(userUid: string): Promise<GetHousehold[]> {
-  const q = query(
-    collection(db, "households"),
-    where("uid", "array-contains", userUid)
-  );
-
   const snapshot = await getDocs(collection(db, "households"));
   const households = snapshot.docs
     .map((doc) => ({ id: doc.id, ...doc.data() } as GetHousehold))
     .filter((h) => h.members.some((m) => m.uid === userUid));
 
   return households;
+}
+
+export function ListenToHouseholds(
+  userUid: string,
+  callback: (households: GetHousehold[]) => void
+) {
+  console.log("Startar Firestore-lyssnare för user:", userUid);
+  const unsubscribe = onSnapshot(collection(db, "households"), (snapshot) => {
+    console.log(
+      "🔥 onSnapshot triggas!",
+      snapshot.docs.length,
+      "dokument hittades"
+    );
+    const households = snapshot.docs
+      .map((doc) => ({ id: doc.id, ...doc.data() } as GetHousehold))
+      .filter((h) => h.members.some((m) => m.uid === userUid));
+    console.log("Efter filtrering:", households.length, "träffar");
+    households.forEach((h) =>
+      console.log(
+        "Hushåll:",
+        h.id,
+        "→ members:",
+        h.members,
+        "hushållskod: ",
+        h.code
+      )
+    );
+
+    callback(households);
+  });
+
+  return unsubscribe; // så du kan stoppa lyssnaren vid behov
+}
+
+export function ListenToSingleHousehold(
+  householdId: string,
+  callback: (household: GetHousehold) => void
+) {
+  const ref = doc(db, "households", householdId);
+
+  const unsubscribe = onSnapshot(ref, (snapshot) => {
+    if (snapshot.exists()) {
+      callback({ id: snapshot.id, ...snapshot.data() } as GetHousehold);
+    }
+  });
+
+  return unsubscribe;
+}
+
+export async function UpdateCode(prop: UpdateCode): Promise<void> {
+  const q = query(collection(db, "households"), where("code", "==", prop.code));
+  const snapshot = await getDocs(q);
+
+  const docRef = snapshot.docs[0].ref;
+
+  await updateDoc(docRef, { code: prop.newCode });
+}
+
+export async function UpdateTitle(prop: UpdateTitle): Promise<void> {
+  const q = query(collection(db, "households"), where("code", "==", prop.code));
+  const snapshot = await getDocs(q);
+
+  const docRef = snapshot.docs[0].ref;
+
+  await updateDoc(docRef, { title: prop.newTitle });
 }

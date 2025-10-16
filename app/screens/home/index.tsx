@@ -1,17 +1,23 @@
 import { useAuthUser } from "@/auth";
 import { useAppTheme } from "@/constants/app-theme";
+import {
+  GetHousehold,
+  GetHouseholds,
+  ListenToHouseholds,
+} from "@/src/data/household-db";
 // import { getAuth } from "firebase/auth";
-import { GetHouseholds } from "@/src/data/household-db";
 import { Ionicons } from "@expo/vector-icons";
 import { useQuery } from "@tanstack/react-query";
 import { router } from "expo-router";
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { FlatList, StyleSheet, TouchableOpacity, View } from "react-native";
 import { Card, List, Text } from "react-native-paper";
 
 export default function Home() {
   const theme = useAppTheme();
   const { data: user } = useAuthUser();
+  const [household, setHouseholds] = useState<GetHousehold[]>([]);
+  const [loading, setIsLoading] = useState(true);
   let householdsInDb = true;
 
   const {
@@ -23,6 +29,26 @@ export default function Home() {
     queryFn: () => GetHouseholds(user!.uid),
     enabled: !!user,
   });
+
+  useEffect(() => {
+    console.log("useeffect körs nu FÖRE ifsatsen");
+    if (!user?.uid) return;
+    console.log("useeffect körs nu");
+
+    const unsubscribe = ListenToHouseholds(user.uid, (householdsFromDb) => {
+      setHouseholds(householdsFromDb);
+      setIsLoading(false);
+    });
+
+    return () => unsubscribe();
+  }, []);
+
+  const handleInfoButton = (household: any) => {
+    router.push({
+      pathname: "/screens/home/info-household",
+      params: { data: JSON.stringify(household) },
+    });
+  };
 
   if (isLoading) return <Text>Laddar...</Text>;
   if (!households?.length) {
@@ -38,7 +64,7 @@ export default function Home() {
         {householdsInDb && (
           <FlatList
             style={styles.flatlist}
-            data={households}
+            data={household}
             keyExtractor={(item) => item.id}
             renderItem={({ item }) => (
               <Card
@@ -56,11 +82,7 @@ export default function Home() {
                     />
                   )}
                   right={() => (
-                    <TouchableOpacity
-                      onPress={() =>
-                        router.push("/screens/home/info-household")
-                      }
-                    >
+                    <TouchableOpacity onPress={() => handleInfoButton(item)}>
                       <Ionicons
                         name="information-circle-outline"
                         size={24}
