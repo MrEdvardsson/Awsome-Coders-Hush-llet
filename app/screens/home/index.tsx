@@ -43,7 +43,12 @@ export default function Home() {
             renderItem={({ item }) => (
               <Card
                 style={styles.householdCard}
-                onPress={() => router.push("/screens/household/chores")}
+                onPress={() => 
+                  router.push({ 
+                  pathname: "/screens/household/chores",
+                  params: { householdId: item.id },
+                })
+              }
               >
                 <Card.Title
                   title={item.title}
