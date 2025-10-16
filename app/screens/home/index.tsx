@@ -74,7 +74,7 @@ export default function Home() {
             )}
           />
         )}
-        <Text variant="displayLarge">Du har inga hushåll</Text>
+        {!households && <Text variant="displayLarge">Du har inga hushåll</Text>}
       </View>
       <View style={styles.footer}>
         <Card
