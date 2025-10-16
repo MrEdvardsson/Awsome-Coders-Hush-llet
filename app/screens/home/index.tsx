@@ -1,3 +1,4 @@
+import { useAuthUser } from "@/auth";
 import { useAppTheme } from "@/constants/app-theme";
 // import { getAuth } from "firebase/auth";
 import { GetHouseholds } from "@/src/data/household-db";
@@ -10,18 +11,22 @@ import { Card, List, Text } from "react-native-paper";
 
 export default function Home() {
   const theme = useAppTheme();
+  const { data: user } = useAuthUser();
+  let householdsInDb = true;
 
   const {
     data: households,
     isLoading,
     error,
   } = useQuery({
-    queryKey: ["households"],
-    queryFn: GetHouseholds,
+    queryKey: ["households", user?.uid],
+    queryFn: () => GetHouseholds(user!.uid),
+    enabled: !!user,
   });
 
+  if (isLoading) return <Text>Laddar...</Text>;
   if (!households?.length) {
-    return <Text style={{ margin: 20 }}>Du har inga hushåll ännu.</Text>;
+    householdsInDb = false;
   }
   console.log("Nu är du i household");
 
@@ -30,41 +35,46 @@ export default function Home() {
       style={[styles.container, { backgroundColor: theme.colors.background }]}
     >
       <View style={styles.listContainer}>
-        <FlatList
-          style={styles.flatlist}
-          data={households}
-          keyExtractor={(item) => item.id}
-          renderItem={({ item }) => (
-            <Card
-              style={styles.householdCard}
-              onPress={() => router.push("/screens/household/chores")}
-            >
-              <Card.Title
-                title={item.title}
-                subtitle={`Kod: ${item.code}`}
-                left={() => (
-                  <Ionicons
-                    name="home"
-                    size={24}
-                    color={theme.colors.onBackground}
-                  />
-                )}
-                right={() => (
-                  <TouchableOpacity
-                    onPress={() => router.push("/screens/home/info-household")}
-                  >
+        {householdsInDb && (
+          <FlatList
+            style={styles.flatlist}
+            data={households}
+            keyExtractor={(item) => item.id}
+            renderItem={({ item }) => (
+              <Card
+                style={styles.householdCard}
+                onPress={() => router.push("/screens/household/chores")}
+              >
+                <Card.Title
+                  title={item.title}
+                  subtitle={`Kod: ${item.code}`}
+                  left={() => (
                     <Ionicons
-                      name="information-circle-outline"
+                      name="home"
                       size={24}
                       color={theme.colors.onBackground}
-                      style={{ paddingRight: 12 }}
                     />
-                  </TouchableOpacity>
-                )}
-              />
-            </Card>
-          )}
-        />
+                  )}
+                  right={() => (
+                    <TouchableOpacity
+                      onPress={() =>
+                        router.push("/screens/home/info-household")
+                      }
+                    >
+                      <Ionicons
+                        name="information-circle-outline"
+                        size={24}
+                        color={theme.colors.onBackground}
+                        style={{ paddingRight: 12 }}
+                      />
+                    </TouchableOpacity>
+                  )}
+                />
+              </Card>
+            )}
+          />
+        )}
+        <Text variant="displayLarge">Du har inga hushåll</Text>
       </View>
       <View style={styles.footer}>
         <Card

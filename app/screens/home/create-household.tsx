@@ -20,8 +20,6 @@ export default function CreateHousehold() {
   const [profileName, setProfileName] = useState("");
   const [selectedAvatar, setSelectedAvatar] = useState<string>("");
 
-  const handleJoinHousehold = () => {};
-
   const handleGenerateCode = () => {
     const newCode = generateCode();
     console.log("Genererar kod! " + newCode);
@@ -38,11 +36,19 @@ export default function CreateHousehold() {
     ) {
       return;
     }
-    router.back();
+
+    if (!user?.uid) {
+      alert("Ingen användare inloggad!");
+      return;
+    }
 
     setLoading(true);
     try {
-      await AddHousehold({ title, code });
+      await AddHousehold(
+        user!.uid,
+        { title, code },
+        { profileName, selectedAvatar }
+      );
       alert("✅ Hushållet sparades i Firebase!");
       setTitle("");
       setCode("");
@@ -50,6 +56,7 @@ export default function CreateHousehold() {
       alert(error);
     } finally {
       setLoading(false);
+      router.back();
     }
   };
 
