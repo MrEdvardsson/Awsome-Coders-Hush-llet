@@ -12,6 +12,7 @@ export default function HomeLayout() {
         headerTitleStyle: {
           color: theme.colors.onSurface,
         },
+        animation: "none",
         headerRight: () => <HeaderMenu />,
       }}
     >
@@ -29,6 +30,10 @@ export default function HomeLayout() {
         name="join-household"
         options={{ title: "Gå med i hushåll" }}
       ></Stack.Screen>
+      <Stack.Screen
+        name="info-household"
+        options={{ title: "Hushålls Info" }}
+      />
     </Stack>
   );
 }
