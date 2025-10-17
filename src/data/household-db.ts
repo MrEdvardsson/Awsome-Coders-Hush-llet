@@ -13,12 +13,14 @@ import {
   where,
 } from "firebase/firestore";
 
+const HOUSEHOLDS = "households";
+
 interface Household {
   title: string;
   code: string;
 }
 
-interface Profile {
+export interface Profile {
   profileName: string;
   selectedAvatar: string;
 }
@@ -165,4 +167,28 @@ export async function UpdateTitle(prop: UpdateTitle): Promise<void> {
   const docRef = snapshot.docs[0].ref;
 
   await updateDoc(docRef, { title: prop.newTitle });
+}
+
+// Vad behöver jag ha här?
+// Först skapa profil.
+// Behöver först koden?
+export async function joinHousehold(code: string) {}
+
+// Här ska jag hämta koden för ett hushåll
+// Ska man hämta alla hushåll i kollektionen?
+// Ska jag returnera hela hushållet eller bara koden?
+// Om jag returnerar hela hushållet så behöver jag inte göra ett till databasanrop?
+export async function getInvitationCode(
+  invitationCode: string
+): Promise<{ isSucces: boolean; household: GetHousehold | null }> {
+  const q = query(
+    collection(db, HOUSEHOLDS),
+    where("code", "==", invitationCode)
+  );
+  const snapshot = await getDocs(q);
+  if (snapshot.empty) return { isSucces: false, household: null };
+
+  const doc = snapshot.docs[0];
+  const houseHold = { id: doc.id, ...doc.data() } as GetHousehold;
+  return { isSucces: true, household: houseHold };
 }
