@@ -1,60 +1,35 @@
-import { useAppTheme } from "@/constants/app-theme";
-import { router, useFocusEffect, useNavigation } from "expo-router";
-import React, { useCallback} from "react";
+import React, { useCallback } from "react";
 import { FlatList, StyleSheet, TouchableOpacity, View } from "react-native";
 import { Card, Text } from "react-native-paper";
-
-type mockChore = {
-  id: string;
-  title: string;
-  description: string;
-  frequencyDays: number;
-  weight: number;
-  imageUrl?: string;
-  audioUrl?: string;
-  isArchived: boolean;
-  assignedTo?: string; // Profile
-};
-
-const mockChores: mockChore[] = [
-  {
-    id: "1",
-    title: "Damma av",
-    description: "Damma av alla ytor i vardagsrummet.",
-    frequencyDays: 7,
-    weight: 4,
-    isArchived: false,
-    assignedTo: "user1",
-  },
-  {
-    id: "2",
-    title: "Dammsuga",
-    description: "Dammsuga hela huset.",
-    frequencyDays: 10,
-    weight: 6,
-    isArchived: false,
-    assignedTo: "user2",
-  },
-  {
-    id: "3",
-    title: "Moppa golven",
-    description: "Moppa alla golv i huset.",
-    frequencyDays: 14,
-    weight: 10,
-    isArchived: false,
-  },
-];
+import { useAppTheme } from "@/constants/app-theme";
+import { router, useFocusEffect, useLocalSearchParams, useNavigation } from "expo-router";
+import { useQuery } from "@tanstack/react-query";
+import { getChores } from "@/src/data/chores";
 
 export default function HouseholdPage() {
   const theme = useAppTheme();
   const nav = useNavigation();
   const rootStack = nav.getParent()?.getParent();
 
+  const { householdId } = useLocalSearchParams<{ householdId: string }>();
+
+  const {
+    data: chores,
+    isLoading,
+    error,
+    refetch,
+  } = useQuery({
+    queryKey: ["chores", householdId],
+    queryFn: () => getChores(householdId),
+    enabled: !!householdId,
+  });
+
   useFocusEffect(
     useCallback(() => {
       rootStack?.setOptions({ headerShown: true });
+      refetch();
       return () => rootStack?.setOptions({ headerShown: false });
-    }, [rootStack])
+    }, [rootStack, refetch])
   );
 
   return (
@@ -65,44 +40,74 @@ export default function HouseholdPage() {
         paddingTop: 30,
       }}
     >
-      <FlatList
-        data={mockChores}
-        keyExtractor={(item) => item.id}
-        renderItem={({ item }) => (
-          <Card
-            style={styles.card}
-            onPress={() =>
-              router.push({
-                pathname: "/screens/household/chores/chore-details",
-                params: {
-                  id: item.id,
-                  title: item.title,
-                  description: item.description,
-                  frequencyDays: item.frequencyDays.toString(),
-                  weight: item.weight.toString(),
-                  assignedTo: item.assignedTo,
-                },
-              })
-            }
-          >
-            <View style={styles.cardContent}>
-              <Text style={styles.titleText}>{item.title}</Text>
+      {isLoading && (
+        <Text style={{ padding: 20, textAlign: "center", fontSize: 18 }}>
+          Laddar...
+        </Text>
+      )}
 
-              <View style={styles.daysCircle}>
-                <Text style={styles.daysText}>{item.frequencyDays}</Text>
+      {error && (
+        <Text style={{ padding: 20, textAlign: "center", fontSize: 18, color: theme.colors.error }}>
+          Något gick fel vid hämtning.
+        </Text>
+      )}
+
+      {!isLoading && !error && (
+        <FlatList
+          data={chores}
+          keyExtractor={(item) => item.id!}
+          ListEmptyComponent={
+            <Text
+              style={{
+                padding: 20,
+                textAlign: "center",
+                fontSize: 30,
+              }}
+            >
+              Inga sysslor ännu 🧹
+            </Text>
+          }
+          renderItem={({ item }) => (
+            <Card
+              style={styles.card}
+              onPress={() =>
+                router.push({
+                  pathname: "/screens/household/chores/chore-details",
+                  params: {
+                    householdId,
+                    id: item.id,
+                    title: item.title,
+                    description: item.description,
+                    frequencyDays: item.frequencyDays.toString(),
+                    weight: item.weight.toString(),
+                    assignedTo: item.assignedTo ?? "",
+                  },
+                })
+              }
+            >
+              <View style={styles.cardContent}>
+                <Text style={styles.titleText}>{item.title}</Text>
+
+                <View style={styles.daysCircle}>
+                  <Text style={styles.daysText}>{item.frequencyDays}</Text>
+                </View>
               </View>
-            </View>
-          </Card>
-        )}
-      />
+            </Card>
+          )}
+        />
+      )}
 
       <TouchableOpacity
-        //TODO ska bara visas om man är admin för hushållet
         style={[
           styles.floatingButton,
           { backgroundColor: theme.colors.secondary },
         ]}
-        onPress={() => router.push("/screens/household/chores/add-chore")}
+        onPress={() =>
+          router.push({
+            pathname: "/screens/household/chores/add-chore",
+            params: { householdId },
+          })
+        }
         activeOpacity={0.8}
       >
         <Text style={styles.plusText}>＋</Text>
@@ -156,7 +161,6 @@ const styles = StyleSheet.create({
     width: 70,
     height: 70,
     borderRadius: 35,
-    backgroundColor: "#2563eb",
     alignItems: "center",
     justifyContent: "center",
     elevation: 6,
