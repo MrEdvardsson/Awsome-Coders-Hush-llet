@@ -1,8 +1,15 @@
+import { useAuthUser } from "@/auth";
 import { useAppTheme } from "@/constants/app-theme";
+
+import {
+  ListenToSingleHousehold,
+  UpdateCode,
+  UpdateTitle,
+} from "@/src/data/household-db";
 import generateCode from "@/utils/generateCode";
 import { Ionicons } from "@expo/vector-icons";
-import { router } from "expo-router";
-import { useState } from "react";
+import { useLocalSearchParams } from "expo-router";
+import { useEffect, useState } from "react";
 import {
   Alert,
   FlatList,
@@ -12,48 +19,45 @@ import {
 } from "react-native";
 import { Button, Card, Text, TextInput } from "react-native-paper";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { profileMock } from "../../../src/data/mockdata";
 
 export default function InfoHousehold() {
   const theme = useAppTheme();
   const [title, setTitle] = useState("");
   const [code, setCode] = useState("");
+  const { data: user } = useAuthUser();
   const isAdmin = true;
+  const { data } = useLocalSearchParams();
+  const initialHousehold = JSON.parse(data as string) as Household;
+  const [household, setHousehold] = useState<Household>(initialHousehold);
 
-  const handleGenerateCode = () => {
+  useEffect(() => {
+    const unsubscribe = ListenToSingleHousehold(household.id, (updated) => {
+      console.log("Hushållet uppdaterat i realtid:", updated);
+      setHousehold(updated);
+    });
+    return () => unsubscribe();
+  }, [household.id]);
+
+  const handleGenerateCode = async () => {
     const newCode = generateCode();
     console.log("Genererar kod! " + newCode);
     setCode(newCode);
+
+    await UpdateCode({ code: household.code, newCode });
   };
 
-  const handleSetTitle = () => {
+  const handleSetTitle = async () => {
     const newTitle = setTitle(title);
+
+    await UpdateTitle({
+      title: household.title,
+      newTitle: title,
+      code: household.code,
+    });
   };
 
   return (
     <SafeAreaView style={{ backgroundColor: theme.colors.background }}>
-      <View
-        style={[
-          styles.header,
-          {
-            borderBottomColor: theme.colors.outline,
-          },
-        ]}
-      >
-        <TouchableOpacity
-          style={styles.backButton}
-          onPress={() => router.back()}
-        >
-          <Ionicons
-            name="arrow-back"
-            size={24}
-            color={theme.colors.onSurface}
-          />
-        </TouchableOpacity>
-        <Text variant="headlineSmall" style={{ color: theme.colors.onSurface }}>
-          Hushålls info
-        </Text>
-      </View>
       <View
         style={{
           flexDirection: "row",
@@ -76,7 +80,7 @@ export default function InfoHousehold() {
               textAlign: "center",
             }}
           >
-            {code || "Ingen Kod hittades"}
+            {household.code || "Ingen Kod hittades"}
           </Text>
         </View>
         {isAdmin && (
@@ -107,7 +111,7 @@ export default function InfoHousehold() {
               <Card style={[styles.titleInput, { flex: 3 }]}>
                 <TextInput
                   mode="outlined"
-                  placeholder={title || "Här kommer hushållets namn att synas"}
+                  placeholder={household.title || "Titel saknas"}
                   value={title}
                   onChangeText={setTitle}
                   style={{ backgroundColor: theme.colors.surface }}
@@ -131,26 +135,28 @@ export default function InfoHousehold() {
         )}
       </View>
       <View style={styles.flatlistView}>
-        <FlatList
+        <FlatList<Member>
           style={[
             styles.flatlistNotPending,
             { backgroundColor: theme.colors.background },
           ]}
-          data={profileMock.filter((item) => !item.isPending)}
+          data={household.members?.filter((item) => !item.isPending)}
           keyExtractor={(item) => item.id}
           renderItem={({ item }) => (
             <Card style={styles.card}>
               <Card.Title
-                title={item.name}
+                title={item.profileName}
                 left={() => (
                   <Text style={{ fontSize: 28, marginLeft: 8 }}>
-                    {item.avatar}
+                    {item.selectedAvatar}
                   </Text>
                 )}
                 right={() =>
                   isAdmin && (
                     <TouchableOpacity
-                      onPress={() => console.log("Nu tog du bort " + item.name)}
+                      onPress={() =>
+                        console.log("Nu tog du bort " + item.profileName)
+                      }
                     >
                       <Ionicons
                         name="trash"
@@ -168,27 +174,27 @@ export default function InfoHousehold() {
       </View>
       <View>
         {isAdmin && (
-          <FlatList
+          <FlatList<Member>
             style={[
               styles.flatlistPending,
               { backgroundColor: theme.colors.background },
             ]}
-            data={profileMock.filter((item) => item.isPending)}
+            data={household.members?.filter((item) => item.isPending)}
             keyExtractor={(item) => item.id}
             renderItem={({ item }) => (
               <Card style={styles.card}>
                 <Card.Title
-                  title={item.name}
+                  title={item.profileName}
                   left={() => (
                     <Text style={{ fontSize: 28, marginLeft: 8 }}>
-                      {item.avatar}
+                      {item.selectedAvatar}
                     </Text>
                   )}
                   right={() => (
                     <View style={styles.iconView}>
                       <TouchableOpacity
                         onPress={() =>
-                          console.log("Nu accepterade du " + item.name)
+                          console.log("Nu accepterade du " + item.profileName)
                         }
                       >
                         <Ionicons
@@ -202,7 +208,7 @@ export default function InfoHousehold() {
                         onPress={() =>
                           Alert.alert(
                             "Bekräfta åtgärd",
-                            `Vill du verkligen acceptera ${item.name}?`,
+                            `Vill du verkligen acceptera ${item.profileName}?`,
                             [
                               {
                                 text: "Ja",
@@ -298,3 +304,18 @@ const styles = StyleSheet.create({
     marginBottom: 20,
   },
 });
+
+interface Member {
+  id: string;
+  profileName: string;
+  selectedAvatar: string;
+  isPending: boolean;
+  isOwner: boolean;
+}
+
+interface Household {
+  id: string;
+  title: string;
+  code: string;
+  members: Member[];
+}
