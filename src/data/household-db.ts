@@ -9,11 +9,14 @@ import {
   query,
   serverTimestamp,
   setDoc,
+  runTransaction,
   updateDoc,
   where,
 } from "firebase/firestore";
 
 const HOUSEHOLDS = "households";
+const PROFILES = "profiles";
+const USEREXTENDS = "user_extend";
 
 interface Household {
   title: string;
@@ -23,6 +26,17 @@ interface Household {
 export interface Profile {
   profileName: string;
   selectedAvatar: string;
+}
+
+export interface ProfileDb extends Profile {
+  id: string;
+  uid: string;
+  isOwner: boolean;
+  isPending: boolean;
+  isPaused: boolean;
+  householdId: string;
+  pausedStart: Date | null;
+  pausedEnd: Date | null;
 }
 
 export interface GetHousehold {
@@ -36,7 +50,14 @@ export interface GetHousehold {
     selectedAvatar: string;
     uid: string;
     isPending: boolean;
+    isPaused: boolean;
   }[];
+}
+
+export interface UserExtends {
+  user_uid: string;
+  profile_ids: string[];
+  houseHold_ids: string[];
 }
 
 interface UpdateCode {
@@ -169,26 +190,71 @@ export async function UpdateTitle(prop: UpdateTitle): Promise<void> {
   await updateDoc(docRef, { title: prop.newTitle });
 }
 
-// Vad behöver jag ha här?
-// Först skapa profil.
-// Behöver först koden?
-export async function joinHousehold(code: string) {}
-
-// Här ska jag hämta koden för ett hushåll
-// Ska man hämta alla hushåll i kollektionen?
-// Ska jag returnera hela hushållet eller bara koden?
-// Om jag returnerar hela hushållet så behöver jag inte göra ett till databasanrop?
-export async function getInvitationCode(
-  invitationCode: string
-): Promise<{ isSucces: boolean; household: GetHousehold | null }> {
+export async function getHouseholdByInvitationCode(
+  invitationCode: string,
+  userId: string
+): Promise<GetHousehold | null> {
   const q = query(
     collection(db, HOUSEHOLDS),
     where("code", "==", invitationCode)
   );
+
   const snapshot = await getDocs(q);
-  if (snapshot.empty) return { isSucces: false, household: null };
+  if (snapshot.empty) return null;
 
   const doc = snapshot.docs[0];
   const houseHold = { id: doc.id, ...doc.data() } as GetHousehold;
-  return { isSucces: true, household: houseHold };
+  return houseHold;
+}
+
+export async function joinHousehold(
+  houseHold: GetHousehold,
+  userId: string,
+  profile: Profile
+) {
+  const houseHoldRef = doc(db, HOUSEHOLDS, houseHold.id);
+  const profileRef = doc(collection(db, PROFILES));
+  const userExtendRef = doc(db, USEREXTENDS, userId);
+
+  // Detta är korrekt data.
+
+  // const profileData: ProfileDb = {
+  //   id: profileRef.id,
+  //   uid: userId,
+  //   profileName: profile.profileName,
+  //   selectedAvatar: profile.selectedAvatar,
+  //   isOwner: false,
+  //   isPending: true,
+  //   isPaused: false,
+  //   householdId: houseHold.id,
+  //   pausedStart: null,
+  //   pausedEnd: null,
+  // };
+
+  const profileData = {
+    id: profileRef.id,
+    uid: userId,
+    profileName: profile.profileName,
+    selectedAvatar: profile.selectedAvatar,
+    isOwner: true,
+    household_id: houseHold.id,
+  };
+
+  await runTransaction(db, async (transaction) => {
+    transaction.set(profileRef, profileData);
+
+    transaction.update(houseHoldRef, {
+      members: arrayUnion(profileData),
+    });
+
+    transaction.set(
+      userExtendRef,
+      {
+        user_uid: userId,
+        profile_ids: arrayUnion(profileRef.id),
+        household_ids: arrayUnion(houseHoldRef.id),
+      },
+      { merge: true }
+    );
+  });
 }
