@@ -1,13 +1,8 @@
 import { useAuthUser } from "@/auth";
 import { useAppTheme } from "@/constants/app-theme";
-import {
-  GetHousehold,
-  GetHouseholds,
-  ListenToHouseholds,
-} from "@/src/data/household-db";
+import { GetHousehold, ListenToHouseholds } from "@/src/data/household-db";
 // import { getAuth } from "firebase/auth";
 import { Ionicons } from "@expo/vector-icons";
-import { useQuery } from "@tanstack/react-query";
 import { router } from "expo-router";
 import React, { useEffect, useState } from "react";
 import { FlatList, StyleSheet, TouchableOpacity, View } from "react-native";
@@ -16,24 +11,11 @@ import { Card, List, Text } from "react-native-paper";
 export default function Home() {
   const theme = useAppTheme();
   const { data: user } = useAuthUser();
-  const [household, setHouseholds] = useState<GetHousehold[]>([]);
+  const [households, setHouseholds] = useState<GetHousehold[]>([]);
   const [loading, setIsLoading] = useState(true);
-  let householdsInDb = true;
-
-  const {
-    data: households,
-    isLoading,
-    error,
-  } = useQuery({
-    queryKey: ["households", user?.uid],
-    queryFn: () => GetHouseholds(user!.uid),
-    enabled: !!user,
-  });
 
   useEffect(() => {
-    console.log("useeffect körs nu FÖRE ifsatsen");
     if (!user?.uid) return;
-    console.log("useeffect körs nu");
 
     const unsubscribe = ListenToHouseholds(user.uid, (householdsFromDb) => {
       setHouseholds(householdsFromDb);
@@ -50,31 +32,29 @@ export default function Home() {
     });
   };
 
-  if (isLoading) return <Text>Laddar...</Text>;
-  if (!households?.length) {
-    householdsInDb = false;
+  if (loading) return <Text>Laddar...</Text>;
+  if (households.length === 0) {
   }
-  console.log("Nu är du i household");
 
   return (
     <View
       style={[styles.container, { backgroundColor: theme.colors.background }]}
     >
       <View style={styles.listContainer}>
-        {householdsInDb && (
+        {households.length > 0 ? (
           <FlatList
             style={styles.flatlist}
-            data={household}
+            data={households}
             keyExtractor={(item) => item.id}
             renderItem={({ item }) => (
               <Card
                 style={styles.householdCard}
-                onPress={() => 
-                  router.push({ 
-                  pathname: "/screens/household/chores",
-                  params: { householdId: item.id },
-                })
-              }
+                onPress={() =>
+                  router.push({
+                    pathname: "/screens/household/chores",
+                    params: { householdId: item.id },
+                  })
+                }
               >
                 <Card.Title
                   title={item.title}
@@ -100,8 +80,14 @@ export default function Home() {
               </Card>
             )}
           />
+        ) : (
+          <Text
+            variant="titleLarge"
+            style={{ textAlign: "center", marginTop: 40 }}
+          >
+            Du har inga hushåll ännu
+          </Text>
         )}
-        {!households && <Text variant="displayLarge">Du har inga hushåll</Text>}
       </View>
       <View style={styles.footer}>
         <Card
