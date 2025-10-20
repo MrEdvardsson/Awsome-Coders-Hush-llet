@@ -1,10 +1,21 @@
 import { useAuthUser } from "@/auth";
 import { useAppTheme } from "@/constants/app-theme";
-import { AddHousehold } from "@/src/data/household-db";
+import {
+  AddHousehold,
+  getHouseholdByGeneratedCode,
+} from "@/src/data/household-db";
+import { handleCreateHousehold } from "@/src/services/householdService";
 import generateCode from "@/utils/generateCode";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { router } from "expo-router";
 import React, { useState } from "react";
-import { ScrollView, StyleSheet, TouchableOpacity, View } from "react-native";
+import {
+  Alert,
+  ScrollView,
+  StyleSheet,
+  TouchableOpacity,
+  View,
+} from "react-native";
 import { Button, Text, TextInput } from "react-native-paper";
 import { SafeAreaView } from "react-native-safe-area-context";
 
@@ -12,52 +23,60 @@ const avatars = ["🦊", "🐷", "🐸", "🐤", "🐙", "🐋", "🦉", "🦄"]
 
 export default function CreateHousehold() {
   const theme = useAppTheme();
+  const queryClient = useQueryClient();
 
   const { data: user } = useAuthUser();
   const [title, setTitle] = useState("");
   const [code, setCode] = useState("");
-  const [loading, setLoading] = useState(false);
   const [profileName, setProfileName] = useState("");
   const [selectedAvatar, setSelectedAvatar] = useState<string>("");
 
-  const handleGenerateCode = () => {
-    const newCode = generateCode();
-    console.log("Genererar kod! " + newCode);
-    setCode(newCode);
+  const handleGenerateCode = async () => {
+    let unique = false;
+    let newCode = "";
+
+    while (!unique) {
+      newCode = generateCode();
+      const result = await getHouseholdByGeneratedCode(newCode);
+
+      if (!result) {
+        unique = true;
+        setCode(newCode);
+      }
+    }
   };
 
-  const handleSaveButton = async () => {
-    console.log("du tryckte på spara!");
-    if (
-      !profileName.trim() ||
-      !selectedAvatar ||
-      !title.trim() ||
-      !code.trim()
-    ) {
-      return;
-    }
-
-    if (!user?.uid) {
-      alert("Ingen användare inloggad!");
-      return;
-    }
-
-    setLoading(true);
-    try {
-      await AddHousehold(
+  const createHouseholdMutation = useMutation({
+    mutationFn: async () =>
+      handleCreateHousehold(
         user!.uid,
-        { title, code },
-        { profileName, selectedAvatar }
-      );
-      alert("✅ Hushållet sparades i Firebase!");
-      setTitle("");
-      setCode("");
-    } catch (error) {
-      alert(error);
-    } finally {
-      setLoading(false);
-      router.back();
-    }
+        profileName,
+        selectedAvatar,
+        title,
+        code
+      ),
+
+    onSuccess: async (data) => {
+      if (data.isSuccess) {
+        await AddHousehold(
+          user!.uid,
+          { title, code },
+          { profileName, selectedAvatar }
+        );
+        queryClient.invalidateQueries({ queryKey: ["households", user!.uid] });
+
+        Alert.alert("Hushåll skapat!");
+      } else {
+        Alert.alert(
+          data.errorMessage ?? "Något gick fel vid 'Lägg till hushåll'!"
+        );
+      }
+    },
+  });
+
+  const handleSaveButton = async () => {
+    createHouseholdMutation.mutate();
+    router.back();
   };
 
   return (
