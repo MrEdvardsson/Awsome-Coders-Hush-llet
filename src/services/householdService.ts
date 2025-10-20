@@ -1,5 +1,6 @@
 import {
   GetHousehold,
+  getHouseholdByGeneratedCode,
   getHouseholdByInvitationCode,
   joinHousehold,
   Profile,
@@ -111,4 +112,45 @@ function getJoinHouseHoldErrors(error: any) {
   }
 
   throw new Error("Ett oväntat fel uppstod. Försök igen senare");
+}
+
+export async function handleCreateHousehold(
+  userUid: string,
+  profileName: string,
+  selectedAvatar: string,
+  houseTitle: string,
+  houseCode: string
+): Promise<{
+  isSuccess: boolean;
+  errorMessage?: string;
+}> {
+  if (!userUid) {
+    return { isSuccess: false, errorMessage: "Du är inte inloggad" };
+  }
+  if (!profileName || "") {
+    return { isSuccess: false, errorMessage: "Ange profilnamn!" };
+  }
+  if (!selectedAvatar) {
+    return { isSuccess: false, errorMessage: "Ange en avatar" };
+  }
+  if (!houseTitle || "") {
+    return { isSuccess: false, errorMessage: "Du måste ange hustitel!" };
+  }
+  if (!houseCode) {
+    return { isSuccess: false, errorMessage: "Ingen huskod hittades!" };
+  }
+
+  try {
+    const findHousehold = await getHouseholdByGeneratedCode(houseCode);
+    if (findHousehold)
+      return {
+        isSuccess: false,
+        errorMessage: "Hushåll med denna kod finns redan. Försök igen!",
+      };
+
+    return { isSuccess: true };
+  } catch (error) {
+    console.log("FirebasError ", error);
+    throw new Error("Något gick fel");
+  }
 }
