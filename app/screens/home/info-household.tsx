@@ -25,7 +25,7 @@ export default function InfoHousehold() {
   const [title, setTitle] = useState("");
   const [code, setCode] = useState("");
   const { data: user } = useAuthUser();
-  const isAdmin = true;
+  const [isOwner, setIsOwner] = useState(false);
   const { data } = useLocalSearchParams();
   const initialHousehold = JSON.parse(data as string) as Household;
   const [household, setHousehold] = useState<Household>(initialHousehold);
@@ -34,6 +34,10 @@ export default function InfoHousehold() {
     const unsubscribe = ListenToSingleHousehold(household.id, (updated) => {
       console.log("Hushållet uppdaterat i realtid:", updated);
       setHousehold(updated);
+
+      const me = updated.members?.find((m) => m.uid === user!.uid);
+
+      setIsOwner(me?.isOwner === true);
     });
     return () => unsubscribe();
   }, [household.id]);
@@ -83,7 +87,7 @@ export default function InfoHousehold() {
             {household.code || "Ingen Kod hittades"}
           </Text>
         </View>
-        {isAdmin && (
+        {isOwner && (
           <Button
             mode="contained"
             onPress={handleGenerateCode}
@@ -95,7 +99,7 @@ export default function InfoHousehold() {
         )}
       </View>
       <View>
-        {isAdmin && (
+        {isOwner && (
           <View style={{ borderBottomWidth: 1 }}>
             <Text
               variant="titleMedium"
@@ -152,7 +156,7 @@ export default function InfoHousehold() {
                   </Text>
                 )}
                 right={() =>
-                  isAdmin && (
+                  isOwner && (
                     <TouchableOpacity
                       onPress={() =>
                         console.log("Nu tog du bort " + item.profileName)
@@ -173,7 +177,7 @@ export default function InfoHousehold() {
         ></FlatList>
       </View>
       <View>
-        {isAdmin && (
+        {isOwner && (
           <FlatList<Member>
             style={[
               styles.flatlistPending,
