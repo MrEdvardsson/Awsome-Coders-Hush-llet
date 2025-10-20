@@ -30,7 +30,16 @@ export async function getChores(householdId: string): Promise<Chore[]> {
 
 export async function addChore(householdId: string, chore: Omit<Chore, "id">) {
   const ref = collection(db, "households", householdId, "chores");
-  return await addDoc(ref, chore);
+
+  const newChore = {
+    ...chore,
+    isArchived: chore.isArchived ?? false,
+    createdAt: serverTimestamp(),
+  };
+
+  const docRef = await addDoc(ref, newChore);
+
+  return docRef.id; 
 }
 
 export async function markChoreCompleted(

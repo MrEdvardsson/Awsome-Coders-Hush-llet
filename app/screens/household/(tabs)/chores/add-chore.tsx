@@ -1,10 +1,14 @@
 import React, { useState } from "react";
-import { View, StyleSheet, ScrollView, TouchableOpacity } from "react-native";
+import { View, StyleSheet, ScrollView, TouchableOpacity, Alert } from "react-native";
 import { useAppTheme } from "@/constants/app-theme";
 import { Text, TextInput, Button } from "react-native-paper";
+import { useLocalSearchParams, router } from "expo-router";
+import { useMutation } from "@tanstack/react-query";
+import { addChore } from "@/src/data/chores";
 
 export default function AddChore() {
   const theme = useAppTheme();
+  const { householdId } = useLocalSearchParams<{ householdId: string }>();
 
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
@@ -13,6 +17,33 @@ export default function AddChore() {
 
   const daysOptions = Array.from({ length: 30 }, (_, i) => i + 1);
   const valueOptions = [1, 2, 4, 6, 8, 10];
+
+  const mutation = useMutation({
+    mutationFn: async () =>
+      await addChore(householdId!, {
+        title,
+        description,
+        frequencyDays,
+        weight: value,
+        isArchived: false,
+      }),
+    onSuccess: () => {
+      Alert.alert("Sysslan har lagts till.");
+      router.back(); 
+    },
+    onError: (err) => {
+      console.error(err);
+      Alert.alert("Fel", "Något gick fel när sysslan skulle sparas.");
+    },
+  });
+
+  const handleSave = () => {
+    if (!title.trim() || !description.trim()) {
+      Alert.alert("Fel", "Titel och beskrivning måste fyllas i.");
+      return;
+    }
+    mutation.mutate();
+  };
 
   return (
     <View style={[styles.container, { backgroundColor: theme.colors.background }]}>
@@ -36,7 +67,7 @@ export default function AddChore() {
         style={[styles.input, { height: 120 }]}
       />
 
-      <Text style={styles.sectionLabel}>Återkommande:</Text>
+      <Text style={styles.sectionLabel}>Återkommande (dagar):</Text>
       <ScrollView
         horizontal
         showsHorizontalScrollIndicator={false}
@@ -48,14 +79,16 @@ export default function AddChore() {
             style={[
               styles.optionCircle,
               {
-                backgroundColor: frequencyDays === d ? "#2563eb" : "#f1f5f9",
+                backgroundColor:
+                  frequencyDays === d ? theme.colors.primary : theme.colors.surfaceVariant,
               },
             ]}
             onPress={() => setFrequencyDays(d)}
           >
             <Text
               style={{
-                color: frequencyDays === d ? "white" : "#1e293b",
+                color:
+                  frequencyDays === d ? theme.colors.background : theme.colors.onTertiary,
                 fontWeight: "600",
               }}
             >
@@ -78,14 +111,15 @@ export default function AddChore() {
             style={[
               styles.optionCircle,
               {
-                backgroundColor: value === v ? "#2563eb" : "#f1f5f9",
+                backgroundColor:
+                  value === v ? theme.colors.primary : theme.colors.surfaceVariant,
               },
             ]}
             onPress={() => setValue(v)}
           >
             <Text
               style={{
-                color: value === v ? "white" : "#1e293b",
+                color: value === v ? theme.colors.background : theme.colors.onTertiary,
                 fontWeight: "600",
               }}
             >
@@ -97,17 +131,12 @@ export default function AddChore() {
 
       <Button
         mode="contained"
-        onPress={() =>
-          console.log({
-            title,
-            description,
-            frequencyDays,
-            value,
-          })
-        }
+        onPress={handleSave}
+        loading={mutation.isPending}
+        disabled={mutation.isPending}
         style={{ marginTop: 30 }}
       >
-        Spara syssla
+        {mutation.isPending ? "Sparar..." : "Spara syssla"}
       </Button>
     </View>
   );
