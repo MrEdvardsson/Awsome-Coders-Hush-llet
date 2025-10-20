@@ -1,15 +1,14 @@
 import { db } from "@/firebase-config";
 import {
-  addDoc,
   arrayUnion,
   collection,
   doc,
   getDocs,
   onSnapshot,
   query,
+  runTransaction,
   serverTimestamp,
   setDoc,
-  runTransaction,
   updateDoc,
   where,
 } from "firebase/firestore";
@@ -18,7 +17,7 @@ const HOUSEHOLDS = "households";
 const PROFILES = "profiles";
 const USEREXTENDS = "user_extend";
 
-interface Household {
+export interface Household {
   title: string;
   code: string;
 }
@@ -77,6 +76,7 @@ export async function AddHousehold(
   profile: Profile
 ) {
   const profileRef = doc(collection(db, "profiles"));
+  const houseRef = doc(collection(db, "households"));
   console.log("Förgenererat ID:", profileRef.id);
 
   const p = {
@@ -85,12 +85,13 @@ export async function AddHousehold(
     profileName: profile.profileName,
     selectedAvatar: profile.selectedAvatar,
     isOwner: true,
-    household_id: "",
+    isPending: false,
+    isPaused: false,
+    household_id: houseRef.id,
   };
 
-  await setDoc(profileRef, p);
-
   const householdDoc = {
+    id: houseRef.id,
     title: household.title,
     code: household.code,
     members: [p],
@@ -98,7 +99,8 @@ export async function AddHousehold(
     createdAt: serverTimestamp(),
   };
 
-  const docRef = await addDoc(collection(db, "households"), householdDoc);
+  await setDoc(profileRef, p);
+  await setDoc(houseRef, householdDoc);
 
   const userExtendRef = doc(db, "user_extend", userUid);
   await setDoc(
@@ -106,14 +108,14 @@ export async function AddHousehold(
     {
       user_uid: [userUid],
       profile_ids: arrayUnion(profileRef.id),
-      household_ids: arrayUnion(docRef.id),
+      household_ids: arrayUnion(householdDoc.id),
     },
     { merge: true }
   );
 
-  await updateDoc(profileRef, { household_id: docRef.id });
+  await updateDoc(profileRef, { household_id: householdDoc.id });
 
-  console.log("✅ Hushåll skapat med ID:", docRef.id);
+  console.log("✅ Hushåll skapat med ID:", householdDoc.id);
 }
 
 export async function GetHouseholds(userUid: string): Promise<GetHousehold[]> {
@@ -140,16 +142,6 @@ export function ListenToHouseholds(
       .map((doc) => ({ id: doc.id, ...doc.data() } as GetHousehold))
       .filter((h) => h.members.some((m) => m.uid === userUid));
     console.log("Efter filtrering:", households.length, "träffar");
-    households.forEach((h) =>
-      console.log(
-        "Hushåll:",
-        h.id,
-        "→ members:",
-        h.members,
-        "hushållskod: ",
-        h.code
-      )
-    );
 
     callback(households);
   });
@@ -218,27 +210,27 @@ export async function joinHousehold(
 
   // Detta är korrekt data.
 
-  // const profileData: ProfileDb = {
-  //   id: profileRef.id,
-  //   uid: userId,
-  //   profileName: profile.profileName,
-  //   selectedAvatar: profile.selectedAvatar,
-  //   isOwner: false,
-  //   isPending: true,
-  //   isPaused: false,
-  //   householdId: houseHold.id,
-  //   pausedStart: null,
-  //   pausedEnd: null,
-  // };
-
-  const profileData = {
+  const profileData: ProfileDb = {
     id: profileRef.id,
     uid: userId,
     profileName: profile.profileName,
     selectedAvatar: profile.selectedAvatar,
-    isOwner: true,
-    household_id: houseHold.id,
+    isOwner: false,
+    isPending: true,
+    isPaused: false,
+    householdId: houseHold.id,
+    pausedStart: null,
+    pausedEnd: null,
   };
+
+  // const profileData = {
+  //   id: profileRef.id,
+  //   uid: userId,
+  //   profileName: profile.profileName,
+  //   selectedAvatar: profile.selectedAvatar,
+  //   isOwner: true,
+  //   household_id: houseHold.id,
+  // };
 
   await runTransaction(db, async (transaction) => {
     transaction.set(profileRef, profileData);
@@ -257,4 +249,17 @@ export async function joinHousehold(
       { merge: true }
     );
   });
+}
+
+export async function getHouseholdByGeneratedCode(
+  code: string
+): Promise<GetHousehold | null> {
+  const q = query(collection(db, HOUSEHOLDS), where("code", "==", code));
+
+  const snapshot = await getDocs(q);
+  if (snapshot.empty) return null;
+
+  const doc = snapshot.docs[0];
+  const houseHold = { id: doc.id, ...doc.data() } as GetHousehold;
+  return houseHold;
 }
