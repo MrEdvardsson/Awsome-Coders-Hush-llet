@@ -36,6 +36,7 @@ export interface ProfileDb extends Profile {
   householdId: string;
   pausedStart: Date | null;
   pausedEnd: Date | null;
+  isDeleted: boolean;
 }
 
 export interface GetHousehold {
@@ -50,7 +51,19 @@ export interface GetHousehold {
     uid: string;
     isPending: boolean;
     isPaused: boolean;
+    isDeleted: boolean;
   }[];
+}
+
+export interface GetMembers {
+  id: string;
+  profileName: string;
+  isOwner: boolean;
+  selectedAvatar: string;
+  uid: string;
+  isPending: boolean;
+  isPaused: boolean;
+  isDeleted: boolean;
 }
 
 export interface UserExtends {
@@ -88,6 +101,8 @@ export async function AddHousehold(
     isPending: false,
     isPaused: false,
     household_id: houseRef.id,
+
+    isDeleted: false,
   };
 
   const householdDoc = {
@@ -221,6 +236,7 @@ export async function joinHousehold(
     householdId: houseHold.id,
     pausedStart: null,
     pausedEnd: null,
+    isDeleted: false,
   };
 
   // const profileData = {
@@ -230,6 +246,7 @@ export async function joinHousehold(
   //   selectedAvatar: profile.selectedAvatar,
   //   isOwner: true,
   //   household_id: houseHold.id,
+  //   isDeleted: false,
   // };
 
   await runTransaction(db, async (transaction) => {
@@ -262,4 +279,27 @@ export async function getHouseholdByGeneratedCode(
   const doc = snapshot.docs[0];
   const houseHold = { id: doc.id, ...doc.data() } as GetHousehold;
   return houseHold;
+}
+
+export async function pendingMember(
+  householdId: string,
+  profileId: string,
+  shouldDelete: boolean
+) {
+  const houseHoldRef = doc(db, "households", householdId);
+
+  await runTransaction(db, async (transaction) => {
+    const houseHoldSnap = await transaction.get(houseHoldRef);
+
+    const householdData = houseHoldSnap.data() as GetHousehold;
+    const updatedMembers = householdData.members.map((member: GetMembers) => {
+      if (member.id !== profileId) return member;
+      if (shouldDelete) return { ...member, isDeleted: true };
+      else {
+        return { ...member, isPending: false };
+      }
+    });
+
+    transaction.update(houseHoldRef, { members: updatedMembers });
+  });
 }

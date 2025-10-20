@@ -3,6 +3,7 @@ import { useAppTheme } from "@/constants/app-theme";
 
 import {
   ListenToSingleHousehold,
+  pendingMember,
   UpdateCode,
   UpdateTitle,
 } from "@/src/data/household-db";
@@ -51,7 +52,7 @@ export default function InfoHousehold() {
   };
 
   const handleSetTitle = async () => {
-    const newTitle = setTitle(title);
+    setTitle(title);
 
     await UpdateTitle({
       title: household.title,
@@ -60,8 +61,16 @@ export default function InfoHousehold() {
     });
   };
 
+  const handlePendingProfile = async (member: Member, accept: boolean) => {
+    if (accept) {
+      await pendingMember(household.id, member.id, true);
+    } else {
+      await pendingMember(household.id, member.id, false);
+    }
+  };
+
   return (
-    <SafeAreaView style={{ backgroundColor: theme.colors.background }}>
+    <SafeAreaView style={{ backgroundColor: theme.colors.background, flex: 1 }}>
       <View
         style={{
           flexDirection: "row",
@@ -138,7 +147,13 @@ export default function InfoHousehold() {
           </View>
         )}
       </View>
-      <View style={styles.flatlistView}>
+      <View
+        style={[
+          styles.flatlistView,
+          { borderBottomColor: theme.colors.onBackground },
+        ]}
+      >
+        <Text variant="titleLarge">Medlemmar:</Text>
         <FlatList<Member>
           style={[
             styles.flatlistNotPending,
@@ -176,8 +191,9 @@ export default function InfoHousehold() {
           )}
         ></FlatList>
       </View>
-      <View>
-        {isOwner && (
+      {isOwner && (
+        <View>
+          <Text variant="titleLarge">Väntande förfrågningar:</Text>
           <FlatList<Member>
             style={[
               styles.flatlistPending,
@@ -198,7 +214,22 @@ export default function InfoHousehold() {
                     <View style={styles.iconView}>
                       <TouchableOpacity
                         onPress={() =>
-                          console.log("Nu accepterade du " + item.profileName)
+                          Alert.alert(
+                            "Bekräfta åtgärd",
+                            `Vill du verkligen acceptera ${item.profileName}?`,
+                            [
+                              {
+                                text: "Ja",
+                                onPress: () => {
+                                  handlePendingProfile(item, true);
+                                },
+                              },
+                              {
+                                text: "Nej",
+                                style: "cancel",
+                              },
+                            ]
+                          )
                         }
                       >
                         <Ionicons
@@ -208,21 +239,19 @@ export default function InfoHousehold() {
                           style={styles.iconCheckmark}
                         />
                       </TouchableOpacity>
+
                       <TouchableOpacity
                         onPress={() =>
                           Alert.alert(
                             "Bekräfta åtgärd",
-                            `Vill du verkligen acceptera ${item.profileName}?`,
+                            `Vill du verkligen neka ${item.profileName}?`,
                             [
                               {
                                 text: "Ja",
                                 onPress: () =>
-                                  console.log("Förfrågan accepterad!"),
+                                  handlePendingProfile(item, false), // 👈 false = nekat
                               },
-                              {
-                                text: "Nej",
-                                style: "cancel",
-                              },
+                              { text: "Nej", style: "cancel" },
                             ]
                           )
                         }
@@ -240,8 +269,8 @@ export default function InfoHousehold() {
               </Card>
             )}
           ></FlatList>
-        )}
-      </View>
+        </View>
+      )}
     </SafeAreaView>
   );
 }
