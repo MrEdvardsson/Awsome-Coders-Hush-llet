@@ -154,3 +154,25 @@ export async function handleCreateHousehold(
     throw new Error("Något gick fel");
   }
 }
+
+export function validateHouseholdMembership(
+  households: GetHousehold[],
+  userUid: string
+): GetHousehold[] {
+  return households.filter((household) => {
+    const userMember = household.members.find(
+      (member) => member.uid === userUid
+    );
+
+    return userMember && !userMember.isPending && !userMember.isDeleted;
+  });
+}
+
+export function validateHouseholdMembers(
+  household: GetHousehold
+): GetHousehold {
+  return {
+    ...household,
+    members: household.members.filter((m) => !m.isDeleted),
+  };
+}

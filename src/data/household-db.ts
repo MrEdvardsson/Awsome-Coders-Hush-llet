@@ -12,6 +12,10 @@ import {
   updateDoc,
   where,
 } from "firebase/firestore";
+import {
+  validateHouseholdMembers,
+  validateHouseholdMembership,
+} from "../services/householdService";
 
 const HOUSEHOLDS = "households";
 const PROFILES = "profiles";
@@ -146,22 +150,17 @@ export function ListenToHouseholds(
   userUid: string,
   callback: (households: GetHousehold[]) => void
 ) {
-  console.log("Startar Firestore-lyssnare för user:", userUid);
   const unsubscribe = onSnapshot(collection(db, "households"), (snapshot) => {
-    console.log(
-      "🔥 onSnapshot triggas!",
-      snapshot.docs.length,
-      "dokument hittades"
-    );
-    const households = snapshot.docs
+    const allHouseholds = snapshot.docs
       .map((doc) => ({ id: doc.id, ...doc.data() } as GetHousehold))
       .filter((h) => h.members.some((m) => m.uid === userUid));
-    console.log("Efter filtrering:", households.length, "träffar");
 
-    callback(households);
+    const validHouseholds = validateHouseholdMembership(allHouseholds, userUid);
+
+    callback(validHouseholds);
   });
 
-  return unsubscribe; // så du kan stoppa lyssnaren vid behov
+  return unsubscribe;
 }
 
 export function ListenToSingleHousehold(
@@ -172,7 +171,11 @@ export function ListenToSingleHousehold(
 
   const unsubscribe = onSnapshot(ref, (snapshot) => {
     if (snapshot.exists()) {
-      callback({ id: snapshot.id, ...snapshot.data() } as GetHousehold);
+      const household = { id: snapshot.id, ...snapshot.data() } as GetHousehold;
+
+      const validateHousehold = validateHouseholdMembers(household);
+
+      callback(validateHousehold);
     }
   });
 
@@ -294,7 +297,7 @@ export async function pendingMember(
     const householdData = houseHoldSnap.data() as GetHousehold;
     const updatedMembers = householdData.members.map((member: GetMembers) => {
       if (member.id !== profileId) return member;
-      if (shouldDelete) return { ...member, isDeleted: true };
+      if (shouldDelete) return { ...member, isDeleted: true, isPending: false };
       else {
         return { ...member, isPending: false };
       }

@@ -33,7 +33,6 @@ export default function InfoHousehold() {
 
   useEffect(() => {
     const unsubscribe = ListenToSingleHousehold(household.id, (updated) => {
-      console.log("Hushållet uppdaterat i realtid:", updated);
       setHousehold(updated);
 
       const me = updated.members?.find((m) => m.uid === user!.uid);
@@ -45,7 +44,7 @@ export default function InfoHousehold() {
 
   const handleGenerateCode = async () => {
     const newCode = generateCode();
-    console.log("Genererar kod! " + newCode);
+
     setCode(newCode);
 
     await UpdateCode({ code: household.code, newCode });
@@ -63,9 +62,11 @@ export default function InfoHousehold() {
 
   const handlePendingProfile = async (member: Member, accept: boolean) => {
     if (accept) {
-      await pendingMember(household.id, member.id, true);
-    } else {
+      console.log("Accepterar");
       await pendingMember(household.id, member.id, false);
+    } else {
+      console.log("Nekar");
+      await pendingMember(household.id, member.id, true);
     }
   };
 
@@ -173,9 +174,9 @@ export default function InfoHousehold() {
                 right={() =>
                   isOwner && (
                     <TouchableOpacity
-                      onPress={() =>
-                        console.log("Nu tog du bort " + item.profileName)
-                      }
+                      onPress={() => {
+                        handlePendingProfile(item, false);
+                      }}
                     >
                       <Ionicons
                         name="trash"
@@ -249,7 +250,7 @@ export default function InfoHousehold() {
                               {
                                 text: "Ja",
                                 onPress: () =>
-                                  handlePendingProfile(item, false), // 👈 false = nekat
+                                  handlePendingProfile(item, false),
                               },
                               { text: "Nej", style: "cancel" },
                             ]
