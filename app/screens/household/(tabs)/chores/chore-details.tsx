@@ -1,7 +1,7 @@
-import { useLocalSearchParams, router } from "expo-router";
-import { Text, View, StyleSheet, TouchableOpacity } from "react-native";
-import { Ionicons } from "@expo/vector-icons";
 import { useAppTheme } from "@/constants/app-theme";
+import { Ionicons } from "@expo/vector-icons";
+import { router, useLocalSearchParams } from "expo-router";
+import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
 
 type ChoreParams = {
   id: string;
@@ -10,12 +10,25 @@ type ChoreParams = {
   frequencyDays: string;
   weight: string;
   assignedTo?: string;
+  daysSinceCompleted?: string;
 };
 
 export default function ChoreDetail() {
   const theme = useAppTheme();
-  const { id, title, description, frequencyDays, weight, assignedTo } =
-    useLocalSearchParams<ChoreParams>();
+  const {
+    id,
+    title,
+    description,
+    frequencyDays,
+    weight,
+    assignedTo,
+    daysSinceCompleted,
+  } = useLocalSearchParams<ChoreParams>();
+
+  const daysSince = parseInt(daysSinceCompleted || "0");
+  const frequency = parseInt(frequencyDays);
+  const isOverdue = daysSince > frequency;
+  const daysOverdue = daysSince - frequency;
 
   return (
     <View
@@ -28,6 +41,23 @@ export default function ChoreDetail() {
         {description}
       </Text>
 
+      {isOverdue && (
+        <View
+          style={[
+            styles.overdueBox,
+            {
+              backgroundColor: theme.colors.errorContainer,
+              borderColor: theme.colors.error,
+            },
+          ]}
+        >
+          <Ionicons name="alert-circle" size={24} color={theme.colors.error} />
+          <Text style={[styles.overdueText, { color: theme.colors.error }]}>
+            Försenad med {daysOverdue} {daysOverdue === 1 ? "dag" : "dagar"}
+          </Text>
+        </View>
+      )}
+
       <View
         style={[
           styles.infoBox,
@@ -36,6 +66,9 @@ export default function ChoreDetail() {
       >
         <Text style={[styles.infoText, { color: theme.colors.onSurface }]}>
           Återkommer var {frequencyDays} dagar
+        </Text>
+        <Text style={[styles.infoText, { color: theme.colors.onSurface }]}>
+          Senast gjord: {daysSince} {daysSince === 1 ? "dag" : "dagar"} sedan
         </Text>
         <Text style={[styles.infoText, { color: theme.colors.onSurface }]}>
           Värde: {weight}
@@ -49,11 +82,8 @@ export default function ChoreDetail() {
       </View>
 
       <TouchableOpacity
-      //TODO ska bara visas om man är admin för hushållet
-        style={[
-          styles.editButton,
-          { backgroundColor: theme.colors.secondary },
-        ]}
+        //TODO ska bara visas om man är admin för hushållet
+        style={[styles.editButton, { backgroundColor: theme.colors.secondary }]}
         onPress={() => router.push("/screens/household/chores/edit-chore")}
         activeOpacity={0.8}
       >
@@ -85,6 +115,19 @@ const styles = StyleSheet.create({
   infoText: {
     fontSize: 15,
     marginBottom: 5,
+  },
+  overdueBox: {
+    flexDirection: "row",
+    alignItems: "center",
+    borderRadius: 12,
+    padding: 15,
+    marginBottom: 15,
+    borderWidth: 1,
+    gap: 10,
+  },
+  overdueText: {
+    fontSize: 16,
+    fontWeight: "600",
   },
   editButton: {
     position: "absolute",

@@ -1,10 +1,15 @@
+import { useAppTheme } from "@/constants/app-theme";
+import { getChores } from "@/src/data/chores";
+import { useQuery } from "@tanstack/react-query";
+import {
+  router,
+  useFocusEffect,
+  useLocalSearchParams,
+  useNavigation,
+} from "expo-router";
 import React, { useCallback } from "react";
 import { FlatList, StyleSheet, TouchableOpacity, View } from "react-native";
 import { Card, Text } from "react-native-paper";
-import { useAppTheme } from "@/constants/app-theme";
-import { router, useFocusEffect, useLocalSearchParams, useNavigation } from "expo-router";
-import { useQuery } from "@tanstack/react-query";
-import { getChores } from "@/src/data/chores";
 
 export default function HouseholdPage() {
   const theme = useAppTheme();
@@ -47,7 +52,14 @@ export default function HouseholdPage() {
       )}
 
       {error && (
-        <Text style={{ padding: 20, textAlign: "center", fontSize: 18, color: theme.colors.error }}>
+        <Text
+          style={{
+            padding: 20,
+            textAlign: "center",
+            fontSize: 18,
+            color: theme.colors.error,
+          }}
+        >
           Något gick fel vid hämtning.
         </Text>
       )}
@@ -67,33 +79,57 @@ export default function HouseholdPage() {
               Inga sysslor ännu 🧹
             </Text>
           }
-          renderItem={({ item }) => (
-            <Card
-              style={styles.card}
-              onPress={() =>
-                router.push({
-                  pathname: "/screens/household/chores/chore-details",
-                  params: {
-                    householdId,
-                    id: item.id,
-                    title: item.title,
-                    description: item.description,
-                    frequencyDays: item.frequencyDays.toString(),
-                    weight: item.weight.toString(),
-                    assignedTo: item.assignedTo ?? "",
-                  },
-                })
-              }
-            >
-              <View style={styles.cardContent}>
-                <Text style={styles.titleText}>{item.title}</Text>
+          renderItem={({ item }) => {
+            const isOverdue =
+              item.daysSinceCompleted !== null &&
+              item.daysSinceCompleted !== undefined &&
+              item.daysSinceCompleted > item.frequencyDays;
 
-                <View style={styles.daysCircle}>
-                  <Text style={styles.daysText}>{item.frequencyDays}</Text>
+            return (
+              <Card
+                style={styles.card}
+                onPress={() =>
+                  router.push({
+                    pathname: "/screens/household/chores/chore-details",
+                    params: {
+                      householdId,
+                      id: item.id,
+                      title: item.title,
+                      description: item.description,
+                      frequencyDays: item.frequencyDays.toString(),
+                      weight: item.weight.toString(),
+                      assignedTo: item.assignedTo ?? "",
+                      daysSinceCompleted:
+                        item.daysSinceCompleted?.toString() ?? "0",
+                    },
+                  })
+                }
+              >
+                <View style={styles.cardContent}>
+                  <Text style={styles.titleText}>{item.title}</Text>
+
+                  <View
+                    style={[
+                      styles.daysCircle,
+                      isOverdue && {
+                        backgroundColor: theme.colors.error,
+                        borderColor: theme.colors.error,
+                      },
+                    ]}
+                  >
+                    <Text
+                      style={[
+                        styles.daysText,
+                        isOverdue && { color: theme.colors.onError },
+                      ]}
+                    >
+                      {item.daysSinceCompleted ?? 0}
+                    </Text>
+                  </View>
                 </View>
-              </View>
-            </Card>
-          )}
+              </Card>
+            );
+          }}
         />
       )}
 
@@ -139,8 +175,8 @@ const styles = StyleSheet.create({
     letterSpacing: 0.5,
   },
   daysCircle: {
-    width: 34,
-    height: 34,
+    width: 28,
+    height: 28,
     borderRadius: 20,
     backgroundColor: "#e6e8ebff",
     alignItems: "center",
