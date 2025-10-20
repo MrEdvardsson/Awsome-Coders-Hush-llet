@@ -9,18 +9,34 @@ import {
   query,
   serverTimestamp,
   setDoc,
+  runTransaction,
   updateDoc,
   where,
 } from "firebase/firestore";
+
+const HOUSEHOLDS = "households";
+const PROFILES = "profiles";
+const USEREXTENDS = "user_extend";
 
 interface Household {
   title: string;
   code: string;
 }
 
-interface Profile {
+export interface Profile {
   profileName: string;
   selectedAvatar: string;
+}
+
+export interface ProfileDb extends Profile {
+  id: string;
+  uid: string;
+  isOwner: boolean;
+  isPending: boolean;
+  isPaused: boolean;
+  householdId: string;
+  pausedStart: Date | null;
+  pausedEnd: Date | null;
 }
 
 export interface GetHousehold {
@@ -34,7 +50,14 @@ export interface GetHousehold {
     selectedAvatar: string;
     uid: string;
     isPending: boolean;
+    isPaused: boolean;
   }[];
+}
+
+export interface UserExtends {
+  user_uid: string;
+  profile_ids: string[];
+  houseHold_ids: string[];
 }
 
 interface UpdateCode {
@@ -165,4 +188,73 @@ export async function UpdateTitle(prop: UpdateTitle): Promise<void> {
   const docRef = snapshot.docs[0].ref;
 
   await updateDoc(docRef, { title: prop.newTitle });
+}
+
+export async function getHouseholdByInvitationCode(
+  invitationCode: string,
+  userId: string
+): Promise<GetHousehold | null> {
+  const q = query(
+    collection(db, HOUSEHOLDS),
+    where("code", "==", invitationCode)
+  );
+
+  const snapshot = await getDocs(q);
+  if (snapshot.empty) return null;
+
+  const doc = snapshot.docs[0];
+  const houseHold = { id: doc.id, ...doc.data() } as GetHousehold;
+  return houseHold;
+}
+
+export async function joinHousehold(
+  houseHold: GetHousehold,
+  userId: string,
+  profile: Profile
+) {
+  const houseHoldRef = doc(db, HOUSEHOLDS, houseHold.id);
+  const profileRef = doc(collection(db, PROFILES));
+  const userExtendRef = doc(db, USEREXTENDS, userId);
+
+  // Detta är korrekt data.
+
+  // const profileData: ProfileDb = {
+  //   id: profileRef.id,
+  //   uid: userId,
+  //   profileName: profile.profileName,
+  //   selectedAvatar: profile.selectedAvatar,
+  //   isOwner: false,
+  //   isPending: true,
+  //   isPaused: false,
+  //   householdId: houseHold.id,
+  //   pausedStart: null,
+  //   pausedEnd: null,
+  // };
+
+  const profileData = {
+    id: profileRef.id,
+    uid: userId,
+    profileName: profile.profileName,
+    selectedAvatar: profile.selectedAvatar,
+    isOwner: true,
+    household_id: houseHold.id,
+  };
+
+  await runTransaction(db, async (transaction) => {
+    transaction.set(profileRef, profileData);
+
+    transaction.update(houseHoldRef, {
+      members: arrayUnion(profileData),
+    });
+
+    transaction.set(
+      userExtendRef,
+      {
+        user_uid: userId,
+        profile_ids: arrayUnion(profileRef.id),
+        household_ids: arrayUnion(houseHoldRef.id),
+      },
+      { merge: true }
+    );
+  });
 }
