@@ -14,10 +14,7 @@ import {
   updateDoc,
   where,
 } from "firebase/firestore";
-import {
-  validateHouseholdMembers,
-  validateHouseholdMembership,
-} from "../services/householdService";
+import { validateHouseholdMembership } from "../services/householdService";
 
 const HOUSEHOLDS = "households";
 const PROFILES = "profiles";
@@ -176,9 +173,9 @@ export function ListenToSingleHousehold(
     if (snapshot.exists()) {
       const household = { id: snapshot.id, ...snapshot.data() } as GetHousehold;
 
-      const validateHousehold = validateHouseholdMembers(household);
+      // const validateHousehold = validateHouseholdMembers(household);
 
-      callback(validateHousehold);
+      callback(household);
     }
   });
 

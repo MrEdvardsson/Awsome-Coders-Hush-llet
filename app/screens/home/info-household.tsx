@@ -171,6 +171,7 @@ export default function InfoHousehold() {
           keyExtractor={(item) => item.id}
           renderItem={({ item }) => (
             <TouchableOpacity
+              disabled={!isOwner}
               onPress={() => {
                 handleProfileSettings(item);
               }}
@@ -183,22 +184,6 @@ export default function InfoHousehold() {
                       {item.selectedAvatar}
                     </Text>
                   )}
-                  right={() =>
-                    isOwner && (
-                      <TouchableOpacity
-                        onPress={() => {
-                          handlePendingProfile(item, false);
-                        }}
-                      >
-                        <Ionicons
-                          name="trash"
-                          size={24}
-                          color={theme.colors.onSurface}
-                          style={styles.trashIcon}
-                        />
-                      </TouchableOpacity>
-                    )
-                  }
                 ></Card.Title>
               </Card>
             </TouchableOpacity>
