@@ -1,8 +1,10 @@
+import { Member } from "@/app/screens/home/info-household";
 import { db } from "@/firebase-config";
 import {
   arrayUnion,
   collection,
   doc,
+  getDoc,
   getDocs,
   onSnapshot,
   query,
@@ -49,6 +51,7 @@ export interface GetHousehold {
   code: string;
   members: {
     id: string;
+    householdId: string;
     profileName: string;
     isOwner: boolean;
     selectedAvatar: string;
@@ -305,4 +308,37 @@ export async function pendingMember(
 
     transaction.update(houseHoldRef, { members: updatedMembers });
   });
+}
+
+export async function updateProfileInHousehold(profile: Member) {
+  try {
+    const householdRef = doc(db, "households", profile.householdId);
+    const householdSnap = await getDoc(householdRef);
+
+    if (!householdSnap.exists()) {
+      throw new Error("Household not found");
+    }
+
+    const data = householdSnap.data();
+    const members: Member[] = data.members || [];
+
+    const updatedMembers = members.map((m) =>
+      m.id === profile.id
+        ? {
+            ...m,
+            isOwner: profile.isOwner,
+            isDeleted: profile.isDeleted,
+            isPaused: profile.isPaused,
+          }
+        : m
+    );
+
+    await updateDoc(householdRef, { members: updatedMembers });
+
+    console.log("✅ Member updated in array!");
+    return true;
+  } catch (error) {
+    console.error("❌ Error updating member:", error);
+    throw error;
+  }
 }
