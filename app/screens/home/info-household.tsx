@@ -70,6 +70,13 @@ export default function InfoHousehold() {
     }
   };
 
+  const handleProfileSettings = (member: Member) => {
+    router.push({
+      pathname: "./profile-modal",
+      params: { data: JSON.stringify(member) },
+    });
+  };
+
   return (
     <SafeAreaView style={{ backgroundColor: theme.colors.background, flex: 1 }}>
       <View
@@ -163,7 +170,11 @@ export default function InfoHousehold() {
           data={household.members?.filter((item) => !item.isPending)}
           keyExtractor={(item) => item.id}
           renderItem={({ item }) => (
-            <TouchableOpacity onPress={() => router.push("./profile-modal")}>
+            <TouchableOpacity
+              onPress={() => {
+                handleProfileSettings(item);
+              }}
+            >
               <Card style={styles.card}>
                 <Card.Title
                   title={item.profileName}
@@ -341,15 +352,18 @@ const styles = StyleSheet.create({
   },
 });
 
-interface Member {
+export interface Member {
   id: string;
+  householdId: string;
   profileName: string;
   selectedAvatar: string;
   isPending: boolean;
   isOwner: boolean;
+  isDeleted: boolean;
+  isPaused: boolean;
 }
 
-interface Household {
+export interface Household {
   id: string;
   title: string;
   code: string;
