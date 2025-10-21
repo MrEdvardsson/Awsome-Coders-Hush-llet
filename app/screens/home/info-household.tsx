@@ -9,7 +9,7 @@ import {
 } from "@/src/data/household-db";
 import generateCode from "@/utils/generateCode";
 import { Ionicons } from "@expo/vector-icons";
-import { useLocalSearchParams } from "expo-router";
+import { router, useLocalSearchParams } from "expo-router";
 import { useEffect, useState } from "react";
 import {
   Alert,
@@ -163,32 +163,34 @@ export default function InfoHousehold() {
           data={household.members?.filter((item) => !item.isPending)}
           keyExtractor={(item) => item.id}
           renderItem={({ item }) => (
-            <Card style={styles.card}>
-              <Card.Title
-                title={item.profileName}
-                left={() => (
-                  <Text style={{ fontSize: 28, marginLeft: 8 }}>
-                    {item.selectedAvatar}
-                  </Text>
-                )}
-                right={() =>
-                  isOwner && (
-                    <TouchableOpacity
-                      onPress={() => {
-                        handlePendingProfile(item, false);
-                      }}
-                    >
-                      <Ionicons
-                        name="trash"
-                        size={24}
-                        color={theme.colors.onSurface}
-                        style={styles.trashIcon}
-                      />
-                    </TouchableOpacity>
-                  )
-                }
-              ></Card.Title>
-            </Card>
+            <TouchableOpacity onPress={() => router.push("./profile-modal")}>
+              <Card style={styles.card}>
+                <Card.Title
+                  title={item.profileName}
+                  left={() => (
+                    <Text style={{ fontSize: 28, marginLeft: 8 }}>
+                      {item.selectedAvatar}
+                    </Text>
+                  )}
+                  right={() =>
+                    isOwner && (
+                      <TouchableOpacity
+                        onPress={() => {
+                          handlePendingProfile(item, false);
+                        }}
+                      >
+                        <Ionicons
+                          name="trash"
+                          size={24}
+                          color={theme.colors.onSurface}
+                          style={styles.trashIcon}
+                        />
+                      </TouchableOpacity>
+                    )
+                  }
+                ></Card.Title>
+              </Card>
+            </TouchableOpacity>
           )}
         ></FlatList>
       </View>
