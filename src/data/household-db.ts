@@ -12,6 +12,10 @@ import {
   updateDoc,
   where,
 } from "firebase/firestore";
+import {
+  validateHouseholdMembers,
+  validateHouseholdMembership,
+} from "../services/householdService";
 
 const HOUSEHOLDS = "households";
 const PROFILES = "profiles";
@@ -36,6 +40,7 @@ export interface ProfileDb extends Profile {
   householdId: string;
   pausedStart: Date | null;
   pausedEnd: Date | null;
+  isDeleted: boolean;
 }
 
 export interface GetHousehold {
@@ -50,7 +55,19 @@ export interface GetHousehold {
     uid: string;
     isPending: boolean;
     isPaused: boolean;
+    isDeleted: boolean;
   }[];
+}
+
+export interface GetMembers {
+  id: string;
+  profileName: string;
+  isOwner: boolean;
+  selectedAvatar: string;
+  uid: string;
+  isPending: boolean;
+  isPaused: boolean;
+  isDeleted: boolean;
 }
 
 export interface UserExtends {
@@ -88,6 +105,8 @@ export async function AddHousehold(
     isPending: false,
     isPaused: false,
     household_id: houseRef.id,
+
+    isDeleted: false,
   };
 
   const householdDoc = {
@@ -131,22 +150,17 @@ export function ListenToHouseholds(
   userUid: string,
   callback: (households: GetHousehold[]) => void
 ) {
-  console.log("Startar Firestore-lyssnare för user:", userUid);
   const unsubscribe = onSnapshot(collection(db, "households"), (snapshot) => {
-    console.log(
-      "🔥 onSnapshot triggas!",
-      snapshot.docs.length,
-      "dokument hittades"
-    );
-    const households = snapshot.docs
+    const allHouseholds = snapshot.docs
       .map((doc) => ({ id: doc.id, ...doc.data() } as GetHousehold))
       .filter((h) => h.members.some((m) => m.uid === userUid));
-    console.log("Efter filtrering:", households.length, "träffar");
 
-    callback(households);
+    const validHouseholds = validateHouseholdMembership(allHouseholds, userUid);
+
+    callback(validHouseholds);
   });
 
-  return unsubscribe; // så du kan stoppa lyssnaren vid behov
+  return unsubscribe;
 }
 
 export function ListenToSingleHousehold(
@@ -157,7 +171,11 @@ export function ListenToSingleHousehold(
 
   const unsubscribe = onSnapshot(ref, (snapshot) => {
     if (snapshot.exists()) {
-      callback({ id: snapshot.id, ...snapshot.data() } as GetHousehold);
+      const household = { id: snapshot.id, ...snapshot.data() } as GetHousehold;
+
+      const validateHousehold = validateHouseholdMembers(household);
+
+      callback(validateHousehold);
     }
   });
 
@@ -221,6 +239,7 @@ export async function joinHousehold(
     householdId: houseHold.id,
     pausedStart: null,
     pausedEnd: null,
+    isDeleted: false,
   };
 
   // const profileData = {
@@ -230,6 +249,7 @@ export async function joinHousehold(
   //   selectedAvatar: profile.selectedAvatar,
   //   isOwner: true,
   //   household_id: houseHold.id,
+  //   isDeleted: false,
   // };
 
   await runTransaction(db, async (transaction) => {
@@ -262,4 +282,27 @@ export async function getHouseholdByGeneratedCode(
   const doc = snapshot.docs[0];
   const houseHold = { id: doc.id, ...doc.data() } as GetHousehold;
   return houseHold;
+}
+
+export async function pendingMember(
+  householdId: string,
+  profileId: string,
+  shouldDelete: boolean
+) {
+  const houseHoldRef = doc(db, "households", householdId);
+
+  await runTransaction(db, async (transaction) => {
+    const houseHoldSnap = await transaction.get(houseHoldRef);
+
+    const householdData = houseHoldSnap.data() as GetHousehold;
+    const updatedMembers = householdData.members.map((member: GetMembers) => {
+      if (member.id !== profileId) return member;
+      if (shouldDelete) return { ...member, isDeleted: true, isPending: false };
+      else {
+        return { ...member, isPending: false };
+      }
+    });
+
+    transaction.update(houseHoldRef, { members: updatedMembers });
+  });
 }
