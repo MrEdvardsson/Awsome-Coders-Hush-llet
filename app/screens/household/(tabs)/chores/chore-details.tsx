@@ -5,6 +5,7 @@ import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
 
 type ChoreParams = {
   id: string;
+  householdId: string;
   title: string;
   description: string;
   frequencyDays: string;
@@ -17,6 +18,7 @@ export default function ChoreDetail() {
   const theme = useAppTheme();
   const {
     id,
+    householdId,
     title,
     description,
     frequencyDays,
@@ -26,7 +28,7 @@ export default function ChoreDetail() {
   } = useLocalSearchParams<ChoreParams>();
 
   const daysSince = parseInt(daysSinceCompleted || "0");
-  const frequency = parseInt(frequencyDays);
+  const frequency = parseInt(frequencyDays || "0");
   const isOverdue = daysSince > frequency;
   const daysOverdue = daysSince - frequency;
 
@@ -84,7 +86,18 @@ export default function ChoreDetail() {
       <TouchableOpacity
         //TODO ska bara visas om man är admin för hushållet
         style={[styles.editButton, { backgroundColor: theme.colors.secondary }]}
-        onPress={() => router.push("/screens/household/chores/edit-chore")}
+        onPress={() => router.push({
+          pathname: "/screens/household/chores/edit-chore",
+          params: {
+            id,
+            householdId,
+            title,
+            description,
+            frequencyDays,
+            weight,
+            assignedTo,
+          },
+        })}
         activeOpacity={0.8}
       >
         <Ionicons name="create-outline" size={30} color="#fff" />
