@@ -5,6 +5,7 @@ import {
   GetHouseholds,
   ListenToHouseholds,
 } from "@/src/data/household-db";
+import { getStatisticsData } from "@/src/services/statisticsService";
 // import { getAuth } from "firebase/auth";
 import { Ionicons } from "@expo/vector-icons";
 import { useQuery } from "@tanstack/react-query";
@@ -19,6 +20,7 @@ export default function Home() {
   const [household, setHouseholds] = useState<GetHousehold[]>([]);
   const [loading, setIsLoading] = useState(true);
   let householdsInDb = true;
+  getStatisticsData();
 
   const {
     data: households,
@@ -69,12 +71,12 @@ export default function Home() {
             renderItem={({ item }) => (
               <Card
                 style={styles.householdCard}
-                onPress={() => 
-                  router.push({ 
-                  pathname: "/screens/household/chores",
-                  params: { householdId: item.id },
-                })
-              }
+                onPress={() =>
+                  router.push({
+                    pathname: "/screens/household/chores",
+                    params: { householdId: item.id },
+                  })
+                }
               >
                 <Card.Title
                   title={item.title}

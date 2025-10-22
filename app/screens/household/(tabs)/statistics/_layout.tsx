@@ -1,9 +1,19 @@
+import { useAppTheme } from "@/constants/app-theme";
 import { Stack } from "expo-router";
 
 export default function ChoresLayout() {
-    return (
-        <Stack>
-            <Stack.Screen name="index" options={{ title: "Hushåll", headerShown: false }}/>
-        </Stack>
-    );
+  const theme = useAppTheme();
+  return (
+    <Stack
+      screenOptions={{
+        headerStyle: { backgroundColor: theme.colors.surface },
+        headerTintColor: theme.colors.onSurface,
+      }}
+    >
+      <Stack.Screen
+        name="index"
+        options={{ title: "Statistik", headerShown: true }}
+      />
+    </Stack>
+  );
 }
