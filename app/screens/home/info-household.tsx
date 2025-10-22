@@ -2,15 +2,16 @@ import { useAuthUser } from "@/auth";
 import { useAppTheme } from "@/constants/app-theme";
 
 import {
+  GetHousehold,
   ListenToSingleHousehold,
   pendingMember,
+  ProfileDb,
   UpdateCode,
   UpdateTitle,
 } from "@/src/data/household-db";
 import generateCode from "@/utils/generateCode";
 import { Ionicons } from "@expo/vector-icons";
 import { router, useLocalSearchParams } from "expo-router";
-import { FieldValue, Timestamp } from "firebase/firestore";
 import { useEffect, useState } from "react";
 import {
   Alert,
@@ -29,14 +30,14 @@ export default function InfoHousehold() {
   const { data: user } = useAuthUser();
   const [isOwner, setIsOwner] = useState(false);
   const { data } = useLocalSearchParams();
-  const initialHousehold = JSON.parse(data as string) as Household;
-  const [household, setHousehold] = useState<Household>(initialHousehold);
+  const initialHousehold = JSON.parse(data as string) as GetHousehold;
+  const [household, setHousehold] = useState<GetHousehold>(initialHousehold);
 
   useEffect(() => {
     const unsubscribe = ListenToSingleHousehold(household.id, (updated) => {
       setHousehold(updated);
 
-      const me = updated.members?.find((m) => m.uid === user!.uid);
+      const me = updated?.profiles?.find((m) => m.uid === user!.uid);
 
       setIsOwner(me?.isOwner === true);
     });
@@ -61,7 +62,7 @@ export default function InfoHousehold() {
     });
   };
 
-  const handlePendingProfile = async (member: Member, accept: boolean) => {
+  const handlePendingProfile = async (member: ProfileDb, accept: boolean) => {
     if (accept) {
       console.log("Accepterar");
       await pendingMember(household.id, member.id, false);
@@ -71,7 +72,7 @@ export default function InfoHousehold() {
     }
   };
 
-  const handleProfileSettings = (member: Member) => {
+  const handleProfileSettings = (member: ProfileDb) => {
     router.push({
       pathname: "./profile-modal",
       params: { data: JSON.stringify(member) },
@@ -163,12 +164,12 @@ export default function InfoHousehold() {
         ]}
       >
         <Text variant="titleLarge">Medlemmar:</Text>
-        <FlatList<Member>
+        <FlatList<ProfileDb>
           style={[
             styles.flatlistNotPending,
             { backgroundColor: theme.colors.background },
           ]}
-          data={household.members?.filter((item) => !item.isPending)}
+          data={household.profiles?.filter((item) => !item.isPending)}
           keyExtractor={(item) => item.id}
           renderItem={({ item }) => (
             <TouchableOpacity
@@ -194,12 +195,12 @@ export default function InfoHousehold() {
       {isOwner && (
         <View>
           <Text variant="titleLarge">Väntande förfrågningar:</Text>
-          <FlatList<Member>
+          <FlatList<ProfileDb>
             style={[
               styles.flatlistPending,
               { backgroundColor: theme.colors.background },
             ]}
-            data={household.members?.filter((item) => item.isPending)}
+            data={household.profiles?.filter((item) => item.isPending)}
             keyExtractor={(item) => item.id}
             renderItem={({ item }) => (
               <Card style={styles.card}>
@@ -338,22 +339,8 @@ const styles = StyleSheet.create({
   },
 });
 
-export interface Member {
-  id: string;
-  householdId: string;
-  profileName: string;
-  selectedAvatar: string;
-  isPending: boolean;
-  isOwner: boolean;
-  isDeleted: boolean;
-  isPaused: boolean;
-  pausedStart?: Timestamp | Date | FieldValue | null;
-  pausedEnd?: Timestamp | Date | FieldValue | null;
-}
-
 export interface Household {
   id: string;
   title: string;
   code: string;
-  members: Member[];
 }

@@ -62,7 +62,7 @@ export default function JoinHousehold() {
               mode="contained"
               onPress={handleOnClick}
               style={{ marginTop: theme.custom.spacing.md }}
-              disabled={invitationCode.length < 5}
+              disabled={invitationCode.length < 1}
               loading={query.isLoading}
             >
               Gå med i hushåll

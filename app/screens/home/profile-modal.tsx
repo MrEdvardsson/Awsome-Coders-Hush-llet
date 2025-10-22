@@ -1,5 +1,6 @@
 import { useAppTheme } from "@/constants/app-theme";
 import { updateProfileInHousehold } from "@/src/data/household-db";
+import { useMutation } from "@tanstack/react-query";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { useState } from "react";
 import { StyleSheet, TouchableWithoutFeedback, View } from "react-native";
@@ -13,12 +14,23 @@ export default function ProfileModal() {
   const initialMember = JSON.parse(data as string) as Member;
   const [member, setMember] = useState<Member>(initialMember);
 
-  const handleSaveButton = async () => {
+  const updateMemberMutation = useMutation({
+    mutationFn: updateProfileInHousehold,
+    onSuccess: () => {
+      console.log("✅ Member updated!");
+      router.back();
+    },
+    onError: (error) => {
+      console.error("❌ Error updating member:", error);
+      alert("Något gick fel vid uppdateringen");
+      router.back();
+    },
+  });
+
+  const handleSaveButton = () => {
     const updatedMember = member;
-
-    await updateProfileInHousehold(updatedMember);
-
-    router.back();
+    console.log(updatedMember);
+    updateMemberMutation.mutate(updatedMember);
   };
 
   return (
@@ -55,7 +67,7 @@ export default function ProfileModal() {
                 />
               </Card.Content>
             </Card>
-            {/* <Card style={style.cardStyle}>
+            <Card style={style.cardStyle}>
               <Card.Content style={style.cardContent}>
                 <Text variant="headlineMedium">isDeleted</Text>
                 <Switch
@@ -63,7 +75,7 @@ export default function ProfileModal() {
                   onValueChange={(v) => setMember({ ...member, isDeleted: v })}
                 />
               </Card.Content>
-            </Card> */}
+            </Card>
             <Card style={style.cardStyle}>
               <Card.Content style={style.cardContent}>
                 <Text variant="headlineMedium">isPaused</Text>
