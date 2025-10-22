@@ -165,6 +165,10 @@ export async function validateHouseholdMembership(
 ): Promise<GetHousehold[]> {
   const validHouseholds: GetHousehold[] = [];
 
+  if (!userExtend.houseHold_ids || userExtend.houseHold_ids.length === 0) {
+    return validHouseholds;
+  }
+
   for (let i = 0; i < userExtend.houseHold_ids.length; i++) {
     const householdId = userExtend.houseHold_ids[i];
     const profileId = userExtend.profile_ids[i];

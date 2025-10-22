@@ -1,18 +1,24 @@
 import { useAppTheme } from "@/constants/app-theme";
-import { updateProfileInHousehold } from "@/src/data/household-db";
+import { ProfileDb, updateProfileInHousehold } from "@/src/data/household-db";
+import { Ionicons } from "@expo/vector-icons";
 import { useMutation } from "@tanstack/react-query";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { useState } from "react";
-import { StyleSheet, TouchableWithoutFeedback, View } from "react-native";
+import {
+  Alert,
+  StyleSheet,
+  TouchableOpacity,
+  TouchableWithoutFeedback,
+  View,
+} from "react-native";
 import { Card, Switch, Text } from "react-native-paper";
-import { Member } from "./info-household";
 
 export default function ProfileModal() {
   const theme = useAppTheme();
   const router = useRouter();
   const { data } = useLocalSearchParams();
-  const initialMember = JSON.parse(data as string) as Member;
-  const [member, setMember] = useState<Member>(initialMember);
+  const initialMember = JSON.parse(data as string) as ProfileDb;
+  const [member, setMember] = useState<ProfileDb>(initialMember);
 
   const updateMemberMutation = useMutation({
     mutationFn: updateProfileInHousehold,
@@ -31,6 +37,27 @@ export default function ProfileModal() {
     const updatedMember = member;
     console.log(updatedMember);
     updateMemberMutation.mutate(updatedMember);
+  };
+
+  const handleDeleteButton = () => {
+    Alert.alert(
+      "Radera medlem",
+      `Är du säker på att du vill radera ${member.profileName}? Detta går inte att ångra.`,
+      [
+        {
+          text: "Avbryt",
+          style: "cancel",
+        },
+        {
+          text: "Radera",
+          style: "destructive",
+          onPress: () => {
+            const deletedMember = { ...member, isDeleted: true };
+            updateMemberMutation.mutate(deletedMember);
+          },
+        },
+      ]
+    );
   };
 
   return (
@@ -56,6 +83,18 @@ export default function ProfileModal() {
                     {member.selectedAvatar}
                   </Text>
                 )}
+                right={() => (
+                  <TouchableOpacity
+                    onPress={handleDeleteButton}
+                    style={{ marginRight: 12 }}
+                  >
+                    <Ionicons
+                      name="trash-outline"
+                      size={28}
+                      color={theme.colors.error}
+                    />
+                  </TouchableOpacity>
+                )}
               />
             </Card>
             <Card style={style.cardStyle}>
@@ -64,15 +103,6 @@ export default function ProfileModal() {
                 <Switch
                   value={member.isOwner}
                   onValueChange={(v) => setMember({ ...member, isOwner: v })}
-                />
-              </Card.Content>
-            </Card>
-            <Card style={style.cardStyle}>
-              <Card.Content style={style.cardContent}>
-                <Text variant="headlineMedium">isDeleted</Text>
-                <Switch
-                  value={member.isDeleted}
-                  onValueChange={(v) => setMember({ ...member, isDeleted: v })}
                 />
               </Card.Content>
             </Card>
