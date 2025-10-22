@@ -11,10 +11,14 @@ import {
   runTransaction,
   serverTimestamp,
   setDoc,
+  Timestamp,
   updateDoc,
   where,
 } from "firebase/firestore";
-import { validateHouseholdMembership } from "../services/householdService";
+import {
+  validateHouseholdMembers,
+  validateHouseholdMembership,
+} from "../services/householdService";
 
 const HOUSEHOLDS = "households";
 const PROFILES = "profiles";
@@ -37,8 +41,8 @@ export interface ProfileDb extends Profile {
   isPending: boolean;
   isPaused: boolean;
   householdId: string;
-  pausedStart: Date | null;
-  pausedEnd: Date | null;
+  pausedStart?: Timestamp | Date | null;
+  pausedEnd?: Timestamp | Date | null;
   isDeleted: boolean;
 }
 
@@ -56,6 +60,8 @@ export interface GetHousehold {
     isPending: boolean;
     isPaused: boolean;
     isDeleted: boolean;
+    pausedStart?: Timestamp | Date | null;
+    pausedEnd?: Timestamp | Date | null;
   }[];
 }
 
@@ -173,9 +179,9 @@ export function ListenToSingleHousehold(
     if (snapshot.exists()) {
       const household = { id: snapshot.id, ...snapshot.data() } as GetHousehold;
 
-      // const validateHousehold = validateHouseholdMembers(household);
+      const validateHousehold = validateHouseholdMembers(household);
 
-      callback(household);
+      callback(validateHousehold);
     }
   });
 
@@ -319,16 +325,28 @@ export async function updateProfileInHousehold(profile: Member) {
     const data = householdSnap.data();
     const members: Member[] = data.members || [];
 
-    const updatedMembers = members.map((m) =>
-      m.id === profile.id
-        ? {
-            ...m,
-            isOwner: profile.isOwner,
-            isDeleted: profile.isDeleted,
-            isPaused: profile.isPaused,
-          }
-        : m
-    );
+    const updatedMembers = members.map((m) => {
+      if (m.id !== profile.id) return m;
+
+      const wasPaused = m.isPaused;
+      const willBePaused = profile.isPaused;
+
+      let updated = {
+        ...m,
+        isOwner: profile.isOwner,
+        isDeleted: profile.isDeleted,
+        isPaused: profile.isPaused,
+      };
+
+      if (!wasPaused && willBePaused) {
+        updated.pausedStart = serverTimestamp();
+      }
+
+      if (wasPaused && !willBePaused) {
+        updated.pausedEnd = serverTimestamp();
+      }
+      return updated;
+    });
 
     await updateDoc(householdRef, { members: updatedMembers });
 

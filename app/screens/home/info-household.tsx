@@ -10,6 +10,7 @@ import {
 import generateCode from "@/utils/generateCode";
 import { Ionicons } from "@expo/vector-icons";
 import { router, useLocalSearchParams } from "expo-router";
+import { FieldValue, Timestamp } from "firebase/firestore";
 import { useEffect, useState } from "react";
 import {
   Alert,
@@ -346,6 +347,8 @@ export interface Member {
   isOwner: boolean;
   isDeleted: boolean;
   isPaused: boolean;
+  pausedStart?: Timestamp | Date | FieldValue | null;
+  pausedEnd?: Timestamp | Date | FieldValue | null;
 }
 
 export interface Household {

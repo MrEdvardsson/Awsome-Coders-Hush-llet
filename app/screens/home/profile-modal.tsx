@@ -55,7 +55,7 @@ export default function ProfileModal() {
                 />
               </Card.Content>
             </Card>
-            <Card style={style.cardStyle}>
+            {/* <Card style={style.cardStyle}>
               <Card.Content style={style.cardContent}>
                 <Text variant="headlineMedium">isDeleted</Text>
                 <Switch
@@ -63,7 +63,7 @@ export default function ProfileModal() {
                   onValueChange={(v) => setMember({ ...member, isDeleted: v })}
                 />
               </Card.Content>
-            </Card>
+            </Card> */}
             <Card style={style.cardStyle}>
               <Card.Content style={style.cardContent}>
                 <Text variant="headlineMedium">isPaused</Text>
