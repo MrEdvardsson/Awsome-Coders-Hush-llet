@@ -23,7 +23,7 @@ export const mockProfiles: ProfileDb[] = [
     id: "1",
     uid: "uid_anna_123",
     profileName: "Anna",
-    selectedAvatar: "avatar1.png",
+    selectedAvatar: "🦊",
     isOwner: true,
     isPending: false,
     isPaused: false,
@@ -35,7 +35,7 @@ export const mockProfiles: ProfileDb[] = [
     id: "2",
     uid: "uid_bob_456",
     profileName: "Bob",
-    selectedAvatar: "avatar2.png",
+    selectedAvatar: "🐷",
     isOwner: false,
     isPending: false,
     isPaused: false,
@@ -47,7 +47,7 @@ export const mockProfiles: ProfileDb[] = [
     id: "3",
     uid: "uid_carla_789",
     profileName: "Carla",
-    selectedAvatar: "avatar3.png",
+    selectedAvatar: "🐙",
     isOwner: false,
     isPending: false,
     isPaused: false,
@@ -93,17 +93,6 @@ export const mockChores: Chore[] = [
   },
   {
     id: "chore_004",
-    title: "Vattna blommor",
-    description: "Vattna alla växter.",
-    frequencyDays: 4,
-    weight: 1,
-    imageUrl: null,
-    audioUrl: null,
-    isArchived: false,
-    assignedTo: [mockProfiles[2]],
-  },
-  {
-    id: "chore_005",
     title: "Vattna blommor",
     description: "Vattna alla växter.",
     frequencyDays: 4,
@@ -308,11 +297,10 @@ interface TotalPieStats {
 
 interface IndividualChoresPieStats {
   choreId: string;
-  choreTitle: string; // Skriver ut Titeln på sysslan.
-  sliceData: PieChartSliceData[]; // Denna datan är för att skriva ut datan i Pajen.
+  choreTitle: string;
+  sliceData: PieChartSliceData[];
 }
 
-// Det är detta interfaces jag vill skicka ut till Statistik sidan.
 interface StatisticsData {
   totalPie: PieChartSliceData[];
   chorePies: IndividualChoresPieStats[];
@@ -343,7 +331,6 @@ export function getStatisticsData() {
   return statisticsData;
 }
 
-// Vad gör denna egentligen? Den skapar ett objekt som visar hur många sysslor en avnändare gjort och hur många poäng profilen har totalt.
 export function getProfileStatitisticsTotal(
   profile: ProfileDb,
   completedChores: CompletedBy[],
@@ -376,8 +363,6 @@ export function getProfileStatitisticsTotal(
   return profileStatisticsTotal;
 }
 
-// Vad gör denna funktionen?
-// Den Mappar för Totala Pajen
 export function mapTotalPieStats(
   profiles: ProfileDb[],
   completedChores: CompletedBy[],
@@ -408,7 +393,6 @@ export function mapTotalPieStats(
   return pieData;
 }
 
-// denna metoden används för att skriva ut Datan som ska visas upp i pajen.
 export function mapToPieChartSliceDataForTotal(
   totalPieStats: TotalPieStats
 ): PieChartSliceData[] {
@@ -417,7 +401,7 @@ export function mapToPieChartSliceDataForTotal(
 
   for (const p of totalPieStats.profileData) {
     const color = getColorFromAvatar(p.profile.selectedAvatar);
-    const emoji = getEmojiFromAvatar(p.profile.selectedAvatar);
+    const emoji = p.profile.selectedAvatar;
     value = calculateChoresAndValuesForTotal(
       totalPieStats.numberOfChores,
       totalPieStats.totalValuePoints,
@@ -434,7 +418,6 @@ export function mapToPieChartSliceDataForTotal(
   return data;
 }
 
-// denna metod ska gå igenom all chores och kolla completed. och returnera en lista med individual.
 function getChorePies(
   chores: Chore[],
   completedBy: CompletedBy[],
@@ -442,9 +425,8 @@ function getChorePies(
 ): IndividualChoresPieStats[] {
   const choresPies: IndividualChoresPieStats[] = [];
   for (const c of chores) {
-    // Hämta alla completedBy.
     const completedChores = completedBy.filter((cb) => cb.chore_id === c.id);
-    // om ingen data finns så skickar vi ändå med ett objekt.
+
     if (completedChores.length === 0) {
       continue;
     }
@@ -485,7 +467,7 @@ function createSliceDataForChore(
 
     if (count > 0) {
       sliceData.push({
-        text: getEmojiFromAvatar(profile.selectedAvatar),
+        text: profile.selectedAvatar,
         color: getColorFromAvatar(profile.selectedAvatar),
         value: (count / totalCompletions) * 100,
       });
@@ -494,46 +476,23 @@ function createSliceDataForChore(
   return sliceData;
 }
 
-function getEmojiFromAvatar(avatarFileName: string): string {
-  switch (avatarFileName) {
-    case "avatar1.png":
-      return "🦊";
-    case "avatar2.png":
-      return "🐷";
-    case "avatar3.png":
-      return "🐸";
-    case "avatar4.png":
-      return "🐤";
-    case "avatar5.png":
-      return "🐙";
-    case "avatar6.png":
-      return "🐋";
-    case "avatar7.png":
-      return "🦉";
-    case "avatar8.png":
-      return "🦄";
-    default:
-      return "❓";
-  }
-}
-
 function getColorFromAvatar(avatarFileName: string): string {
   switch (avatarFileName) {
-    case "avatar1.png":
+    case "🦊":
       return "#E67E22";
-    case "avatar2.png":
+    case "🐷":
       return "#F8BBD0";
-    case "avatar3.png":
+    case "🐸":
       return "#43A047";
-    case "avatar4.png":
+    case "🐤":
       return "#FFEB3B";
-    case "avatar5.png":
+    case "🐙":
       return "#E57373";
-    case "avatar6.png":
+    case "🐋":
       return "#4FC3F7";
-    case "avatar7.png":
+    case "🦉":
       return "#8D6E63";
-    case "avatar8.png":
+    case "🦄":
       return "#BA68C8";
     default:
       return "#CCCCCC";
