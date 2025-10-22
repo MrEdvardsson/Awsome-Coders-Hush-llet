@@ -138,8 +138,6 @@ export default function Statistics() {
                 </Card.Content>
               </Card>
             )}
-            columnWrapperStyle={{ gap: 12 }}
-            showsVerticalScrollIndicator={true}
           />
         </View>
       </SafeAreaView>

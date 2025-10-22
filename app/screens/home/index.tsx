@@ -20,7 +20,6 @@ export default function Home() {
   const [household, setHouseholds] = useState<GetHousehold[]>([]);
   const [loading, setIsLoading] = useState(true);
   let householdsInDb = true;
-  getStatisticsData();
 
   const {
     data: households,
