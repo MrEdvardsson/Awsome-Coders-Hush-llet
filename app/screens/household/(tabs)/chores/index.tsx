@@ -8,8 +8,8 @@ import {
   useNavigation,
 } from "expo-router";
 import React, { useCallback } from "react";
-import { FlatList, StyleSheet, TouchableOpacity, View } from "react-native";
-import { Card, Text } from "react-native-paper";
+import { FlatList, StyleSheet, View } from "react-native";
+import { Card, FAB, Surface, Text } from "react-native-paper";
 
 export default function HouseholdPage() {
   const theme = useAppTheme();
@@ -42,7 +42,6 @@ export default function HouseholdPage() {
       style={{
         flex: 1,
         backgroundColor: theme.colors.background,
-        paddingTop: 30,
       }}
     >
       {isLoading && (
@@ -52,162 +51,177 @@ export default function HouseholdPage() {
       )}
 
       {error && (
-        <Text
-          style={{
-            padding: 20,
-            textAlign: "center",
-            fontSize: 18,
-            color: theme.colors.error,
-          }}
-        >
-          Något gick fel vid hämtning.
-        </Text>
+        <View style={styles.centerContainer}>
+          <Text
+            variant="titleMedium"
+            style={{ color: theme.colors.error, textAlign: "center" }}
+          >
+            Något gick fel vid hämtning.
+          </Text>
+        </View>
       )}
 
       {!isLoading && !error && (
-        <FlatList
-          data={chores}
-          keyExtractor={(item) => item.id!}
-          ListEmptyComponent={
-            <Text
-              style={{
-                padding: 20,
-                textAlign: "center",
-                fontSize: 30,
-              }}
-            >
-              Inga sysslor ännu 🧹
-            </Text>
-          }
-          renderItem={({ item }) => {
-            const isOverdue =
-              item.daysSinceCompleted !== null &&
-              item.daysSinceCompleted !== undefined &&
-              item.daysSinceCompleted > item.frequencyDays;
+        <>
+          <FlatList
+            data={chores}
+            keyExtractor={(item) => item.id!}
+            contentContainerStyle={styles.listContent}
+            ListEmptyComponent={
+              <View style={styles.emptyContainer}>
+                <Text variant="displaySmall" style={{ textAlign: "center" }}>
+                  🧹
+                </Text>
+                <Text
+                  variant="titleLarge"
+                  style={{
+                    textAlign: "center",
+                    marginTop: 16,
+                    color: theme.colors.onSurface,
+                  }}
+                >
+                  Inga sysslor ännu
+                </Text>
+                <Text
+                  variant="bodyMedium"
+                  style={{
+                    textAlign: "center",
+                    marginTop: 8,
+                    color: theme.colors.onSurfaceVariant,
+                  }}
+                >
+                  Lägg till en syssla för att komma igång
+                </Text>
+              </View>
+            }
+            renderItem={({ item }) => {
+              const isOverdue =
+                item.daysSinceCompleted !== null &&
+                item.daysSinceCompleted !== undefined &&
+                item.daysSinceCompleted > item.frequencyDays;
 
-            return (
-              <Card
-                style={styles.card}
-                onPress={() =>
-                  router.push({
-                    pathname: "/screens/household/chores/chore-details",
-                    params: {
-                      householdId,
-                      id: item.id,
-                      title: item.title,
-                      description: item.description,
-                      frequencyDays: item.frequencyDays.toString(),
-                      weight: item.weight.toString(),
-                      assignedTo: item.assignedTo ?? "",
-                      daysSinceCompleted:
-                        item.daysSinceCompleted?.toString() ?? "0",
-                    },
-                  })
-                }
-              >
-                <View style={styles.cardContent}>
-                  <Text style={styles.titleText}>{item.title}</Text>
-
-                  <View
-                    style={[
-                      styles.daysCircle,
-                      isOverdue && {
-                        backgroundColor: theme.colors.error,
-                        borderColor: theme.colors.error,
+              return (
+                <Card
+                  style={styles.card}
+                  mode="elevated"
+                  elevation={2}
+                  onPress={() =>
+                    router.push({
+                      pathname: "/screens/household/chores/chore-details",
+                      params: {
+                        householdId,
+                        id: item.id,
+                        title: item.title,
+                        description: item.description,
+                        frequencyDays: item.frequencyDays.toString(),
+                        weight: item.weight.toString(),
+                        assignedTo: item.assignedTo ?? "",
+                        daysSinceCompleted:
+                          item.daysSinceCompleted?.toString() ?? "0",
                       },
-                    ]}
-                  >
-                    <Text
-                      style={[
-                        styles.daysText,
-                        isOverdue && { color: theme.colors.onError },
-                      ]}
-                    >
-                      {item.daysSinceCompleted ?? 0}
-                    </Text>
-                  </View>
-                </View>
-              </Card>
-            );
-          }}
-        />
-      )}
+                    })
+                  }
+                >
+                  <Card.Content>
+                    <View style={styles.cardContent}>
+                      <View style={{ flex: 1 }}>
+                        <Text variant="titleMedium" style={styles.titleText}>
+                          {item.title}
+                        </Text>
+                        {item.description && (
+                          <Text
+                            variant="bodySmall"
+                            numberOfLines={1}
+                            style={{
+                              color: theme.colors.onSurfaceVariant,
+                              marginTop: 4,
+                            }}
+                          >
+                            {item.description}
+                          </Text>
+                        )}
+                      </View>
 
-      <TouchableOpacity
-        style={[
-          styles.floatingButton,
-          { backgroundColor: theme.colors.secondary },
-        ]}
-        onPress={() =>
-          router.push({
-            pathname: "/screens/household/chores/add-chore",
-            params: { householdId },
-          })
-        }
-        activeOpacity={0.8}
-      >
-        <Text style={styles.plusText}>＋</Text>
-      </TouchableOpacity>
+                      <Surface
+                        style={[
+                          styles.daysChip,
+                          {
+                            backgroundColor: isOverdue
+                              ? theme.colors.errorContainer
+                              : theme.colors.secondaryContainer,
+                          },
+                        ]}
+                        elevation={0}
+                      >
+                        <Text
+                          variant="labelLarge"
+                          style={{
+                            color: isOverdue
+                              ? theme.colors.error
+                              : theme.colors.onSecondaryContainer,
+                            fontWeight: "bold",
+                          }}
+                        >
+                          {item.daysSinceCompleted ?? 0}
+                        </Text>
+                      </Surface>
+                    </View>
+                  </Card.Content>
+                </Card>
+              );
+            }}
+          />
+          <FAB
+            icon="plus"
+            style={{ position: "absolute", margin: 24, right: 8, bottom: 8 }}
+            onPress={() =>
+              router.push({
+                pathname: "/screens/household/chores/add-chore",
+                params: { householdId },
+              })
+            }
+          />
+        </>
+      )}
     </View>
   );
 }
 
 const styles = StyleSheet.create({
+  listContent: {
+    padding: 16,
+    paddingBottom: 80,
+  },
   card: {
-    marginHorizontal: 12,
-    marginVertical: 8,
-    borderRadius: 15,
-    elevation: 2,
-    backgroundColor: "#fff",
+    marginBottom: 12,
+    borderRadius: 12,
   },
   cardContent: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
-    paddingVertical: 18,
-    paddingHorizontal: 20,
+    gap: 12,
   },
   titleText: {
-    flex: 1,
-    fontSize: 18,
-    fontWeight: "700",
-    color: "#1e293b",
-    letterSpacing: 0.5,
-  },
-  daysCircle: {
-    width: 28,
-    height: 28,
-    borderRadius: 20,
-    backgroundColor: "#e6e8ebff",
-    alignItems: "center",
-    justifyContent: "center",
-    marginLeft: 10,
-    borderWidth: 1,
-    borderColor: "#d1d5db",
-  },
-  daysText: {
-    fontSize: 15,
     fontWeight: "600",
-    color: "#334155",
   },
-  floatingButton: {
-    position: "absolute",
-    bottom: 35,
-    alignSelf: "center",
-    width: 70,
-    height: 70,
-    borderRadius: 35,
+  daysChip: {
+    borderRadius: 20,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    minWidth: 50,
+    alignItems: "center",
+  },
+  centerContainer: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    padding: 24,
+  },
+  emptyContainer: {
     alignItems: "center",
     justifyContent: "center",
-    elevation: 6,
-    shadowColor: "#000",
-    shadowOpacity: 0.25,
-    shadowRadius: 6,
-    shadowOffset: { width: 0, height: 3 },
-  },
-  plusText: {
-    color: "white",
-    fontSize: 38,
-    marginTop: -2,
+    paddingVertical: 60,
+    paddingHorizontal: 24,
   },
 });

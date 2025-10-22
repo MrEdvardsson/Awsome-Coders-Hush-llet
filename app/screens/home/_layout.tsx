@@ -12,7 +12,7 @@ export default function HomeLayout() {
         headerTitleStyle: {
           color: theme.colors.onSurface,
         },
-        animation: "none",
+        animation: "slide_from_right",
         headerRight: () => <HeaderMenu />,
       }}
     >

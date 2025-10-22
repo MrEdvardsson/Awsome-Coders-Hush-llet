@@ -3,7 +3,7 @@ export default function generateCode() {
   const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
   let result = "";
 
-  for (let i = 0; i < 10; i++) {
+  for (let i = 0; i < 5; i++) {
     result += chars[Math.floor(Math.random() * chars.length)];
   }
 
