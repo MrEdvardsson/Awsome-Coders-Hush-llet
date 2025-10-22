@@ -5,14 +5,15 @@ import { GetHousehold, ListenToHouseholds } from "@/src/data/household-db";
 import { Ionicons } from "@expo/vector-icons";
 import { router } from "expo-router";
 import React, { useEffect, useState } from "react";
-import { FlatList, StyleSheet, TouchableOpacity, View } from "react-native";
-import { Card, List, Text } from "react-native-paper";
+import { FlatList, StyleSheet, View } from "react-native";
+import { Card, FAB, IconButton, Text } from "react-native-paper";
 
 export default function Home() {
   const theme = useAppTheme();
   const { data: user } = useAuthUser();
   const [households, setHouseholds] = useState<GetHousehold[]>([]);
   const [loading, setIsLoading] = useState(true);
+  const [fabOpen, setFabOpen] = useState(false);
 
   useEffect(() => {
     if (!user?.uid) return;
@@ -40,122 +41,115 @@ export default function Home() {
     <View
       style={[styles.container, { backgroundColor: theme.colors.background }]}
     >
-      <View style={styles.listContainer}>
-        {households.length > 0 ? (
-          <FlatList
-            style={styles.flatlist}
-            data={households}
-            keyExtractor={(item) => item.id}
-            renderItem={({ item }) => (
-              <Card
-                style={styles.householdCard}
-                onPress={() =>
-                  router.push({
-                    pathname: "/screens/household/chores",
-                    params: { householdId: item.id },
-                  })
-                }
-              >
-                <Card.Title
-                  title={item.title}
-                  subtitle={`Kod: ${item.code}`}
-                  left={() => (
-                    <Ionicons
-                      name="home"
-                      size={24}
-                      color={theme.colors.onBackground}
-                    />
-                  )}
-                  right={() => (
-                    <TouchableOpacity onPress={() => handleInfoButton(item)}>
-                      <Ionicons
-                        name="information-circle-outline"
-                        size={24}
-                        color={theme.colors.onBackground}
-                        style={{ paddingRight: 12 }}
-                      />
-                    </TouchableOpacity>
-                  )}
-                />
-              </Card>
-            )}
-          />
-        ) : (
-          <Text
-            variant="titleLarge"
-            style={{ textAlign: "center", marginTop: 40 }}
+      <FlatList
+        data={households}
+        keyExtractor={(item) => item.id}
+        contentContainerStyle={styles.listContent}
+        ListEmptyComponent={
+          <View style={styles.emptyContainer}>
+            <Ionicons
+              name="home-outline"
+              size={64}
+              color={theme.colors.outline}
+            />
+            <Text
+              variant="headlineSmall"
+              style={{
+                textAlign: "center",
+                marginTop: 16,
+                color: theme.colors.onSurface,
+              }}
+            >
+              Inga hushåll ännu
+            </Text>
+            <Text
+              variant="bodyMedium"
+              style={{
+                textAlign: "center",
+                marginTop: 8,
+                color: theme.colors.onSurfaceVariant,
+              }}
+            >
+              Skapa ett nytt eller gå med i ett befintligt
+            </Text>
+          </View>
+        }
+        renderItem={({ item }) => (
+          <Card
+            style={styles.householdCard}
+            mode="elevated"
+            elevation={2}
+            onPress={() =>
+              router.push({
+                pathname: "/screens/household/chores",
+                params: { householdId: item.id },
+              })
+            }
           >
-            Du har inga hushåll ännu
-          </Text>
+            <Card.Title
+              title={item.title}
+              titleVariant="titleLarge"
+              subtitle={`Kod: ${item.code}`}
+              subtitleVariant="bodyMedium"
+              left={(props) => (
+                <Ionicons
+                  name="home"
+                  size={28}
+                  color={theme.colors.primary}
+                  style={{ marginLeft: 8 }}
+                />
+              )}
+              right={(props) => (
+                <IconButton
+                  icon="information-outline"
+                  size={24}
+                  onPress={() => handleInfoButton(item)}
+                />
+              )}
+            />
+          </Card>
         )}
-      </View>
-      <View style={styles.footer}>
-        <Card
-          style={styles.footerCard}
-          onPress={() => router.push("/screens/home/create-household")}
-        >
-          <Card.Content style={styles.footerCardContent}>
-            <Text variant="titleMedium">Lägg till</Text>
-            <List.Icon icon="plus" />
-          </Card.Content>
-        </Card>
-        <Card
-          style={{
-            margin: 10,
-            borderRadius: 25,
-            width: "40%",
-          }}
-          onPress={() => router.push("/screens/home/join-household")}
-        >
-          <Card.Content style={styles.footerCardContent}>
-            <Text variant="titleMedium">Gå med </Text>
-            <List.Icon icon="plus" />
-          </Card.Content>
-        </Card>
-      </View>
+      />
+
+      <FAB.Group
+        open={fabOpen}
+        visible
+        icon={fabOpen ? "close" : "plus"}
+        actions={[
+          {
+            icon: "home-plus",
+            label: "Skapa hushåll",
+            onPress: () => router.push("/screens/home/create-household"),
+          },
+          {
+            icon: "account-multiple-plus",
+            label: "Gå med i hushåll",
+            onPress: () => router.push("/screens/home/join-household"),
+          },
+        ]}
+        onStateChange={({ open }) => setFabOpen(open)}
+        style={{ position: "absolute", margin: 24, right: 8, bottom: 8 }}
+      />
     </View>
   );
 }
 const styles = StyleSheet.create({
   container: {
-    height: "100%",
-    paddingTop: 20,
+    flex: 1,
   },
-  listContainer: {
-    flex: 8,
-  },
-  flatlist: {
-    height: "75%",
+  listContent: {
+    padding: 16,
+    paddingBottom: 80,
   },
   householdCard: {
-    margin: 10,
-    borderRadius: 15,
+    marginBottom: 12,
+    borderRadius: 12,
   },
-  footer: {
+  emptyContainer: {
     flex: 1,
-    padding: 10,
-    backgroundColor: "grey",
-    borderTopLeftRadius: 15,
-    borderTopRightRadius: 15,
-    flexDirection: "row",
-    justifyContent: "space-between",
     alignItems: "center",
-  },
-  footerCard: {
-    margin: 10,
-    borderRadius: 25,
-    width: "40%",
-  },
-  footerCardContent: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    padding: 10,
-  },
-  iconView: {
-    flexDirection: "row",
-    alignItems: "center",
-    marginRight: 12,
-    gap: 12,
+    justifyContent: "center",
+    paddingVertical: 60,
+    paddingHorizontal: 24,
   },
 });
