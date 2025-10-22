@@ -207,11 +207,6 @@ export const mockedCompletedByChores: {
     chore_id: "chore_002",
     completedAt: new Date("2025-10-19T18:45:00Z"),
   },
-  {
-    profile_id: "2",
-    chore_id: "chore_005",
-    completedAt: new Date("2025-10-19T18:45:00Z"),
-  },
 
   // === Förra månaden (september 2025) ===
   {
