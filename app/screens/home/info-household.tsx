@@ -2,14 +2,16 @@ import { useAuthUser } from "@/auth";
 import { useAppTheme } from "@/constants/app-theme";
 
 import {
+  GetHousehold,
   ListenToSingleHousehold,
   pendingMember,
+  ProfileDb,
   UpdateCode,
   UpdateTitle,
 } from "@/src/data/household-db";
 import generateCode from "@/utils/generateCode";
 import { Ionicons } from "@expo/vector-icons";
-import { useLocalSearchParams } from "expo-router";
+import { router, useLocalSearchParams } from "expo-router";
 import { useEffect, useState } from "react";
 import { Alert, ScrollView, StyleSheet, View } from "react-native";
 import {
@@ -31,14 +33,14 @@ export default function InfoHousehold() {
   const { data: user } = useAuthUser();
   const [isOwner, setIsOwner] = useState(false);
   const { data } = useLocalSearchParams();
-  const initialHousehold = JSON.parse(data as string) as Household;
-  const [household, setHousehold] = useState<Household>(initialHousehold);
+  const initialHousehold = JSON.parse(data as string) as GetHousehold;
+  const [household, setHousehold] = useState<GetHousehold>(initialHousehold);
 
   useEffect(() => {
     const unsubscribe = ListenToSingleHousehold(household.id, (updated) => {
       setHousehold(updated);
 
-      const me = updated.members?.find((m) => m.uid === user!.uid);
+      const me = updated?.profiles?.find((m) => m.uid === user!.uid);
 
       setIsOwner(me?.isOwner === true);
     });
@@ -63,7 +65,7 @@ export default function InfoHousehold() {
     });
   };
 
-  const handlePendingProfile = async (member: Member, accept: boolean) => {
+  const handlePendingProfile = async (member: ProfileDb, accept: boolean) => {
     if (accept) {
       console.log("Accepterar");
       await pendingMember(household.id, member.id, false);
@@ -71,6 +73,13 @@ export default function InfoHousehold() {
       console.log("Nekar");
       await pendingMember(household.id, member.id, true);
     }
+  };
+
+  const handleProfileSettings = (member: ProfileDb) => {
+    router.push({
+      pathname: "./profile-modal",
+      params: { data: JSON.stringify(member) },
+    });
   };
 
   return (
@@ -157,12 +166,13 @@ export default function InfoHousehold() {
               Medlemmar
             </Text>
             <Chip mode="outlined" compact>
-              {household.members?.filter((item) => !item.isPending).length || 0}
+              {household.profiles?.filter((item) => !item.isPending).length ||
+                0}
             </Chip>
           </View>
 
-          <View style={styles.membersList}>
-            {household.members
+          <View style={styles.profilesList}>
+            {household.profiles
               ?.filter((item) => !item.isPending)
               .map((item, index) => (
                 <View key={item.id}>
@@ -182,29 +192,14 @@ export default function InfoHousehold() {
                         </Chip>
                       )}
                     </View>
-                    {isOwner && !item.isOwner && (
-                      <IconButton
-                        icon="delete-outline"
-                        size={20}
-                        onPress={() => {
-                          Alert.alert(
-                            "Ta bort medlem",
-                            `Vill du ta bort ${item.profileName}?`,
-                            [
-                              {
-                                text: "Avbryt",
-                                style: "cancel",
-                              },
-                              {
-                                text: "Ta bort",
-                                style: "destructive",
-                                onPress: () =>
-                                  handlePendingProfile(item, false),
-                              },
-                            ]
-                          );
-                        }}
-                      />
+                    {isOwner && (
+                      <View style={styles.actionButtons}>
+                        <IconButton
+                          icon="cog-outline"
+                          size={20}
+                          onPress={() => handleProfileSettings(item)}
+                        />
+                      </View>
                     )}
                   </View>
                 </View>
@@ -212,9 +207,9 @@ export default function InfoHousehold() {
           </View>
         </Surface>
 
-        {/* Väntande förfrågningar */}
         {isOwner &&
-          household.members?.filter((item) => item.isPending).length > 0 && (
+          (household.profiles?.filter((item) => item.isPending).length ?? 0) >
+            0 && (
             <View>
               <View style={styles.pendingHeader}>
                 <Ionicons
@@ -226,12 +221,12 @@ export default function InfoHousehold() {
                   Väntande förfrågningar
                 </Text>
                 <Chip mode="outlined" compact>
-                  {household.members?.filter((item) => item.isPending).length ||
-                    0}
+                  {household.profiles?.filter((item) => item.isPending)
+                    .length || 0}
                 </Chip>
               </View>
 
-              {household.members
+              {household.profiles
                 ?.filter((item) => item.isPending)
                 .map((item) => (
                   <Card
@@ -355,7 +350,7 @@ const styles = StyleSheet.create({
   titleInput: {
     flex: 1,
   },
-  membersList: {
+  profilesList: {
     gap: 8,
   },
   memberItem: {
@@ -405,17 +400,8 @@ const styles = StyleSheet.create({
   },
 });
 
-interface Member {
-  id: string;
-  profileName: string;
-  selectedAvatar: string;
-  isPending: boolean;
-  isOwner: boolean;
-}
-
-interface Household {
+export interface Household {
   id: string;
   title: string;
   code: string;
-  members: Member[];
 }
