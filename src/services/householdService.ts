@@ -28,7 +28,7 @@ export async function validateAndGetHousehold(
       invitationCode.toUpperCase(),
       currentUserId
     );
-    if (!household) return { isSuccess: false, errorMessage: "Oiltig kod" };
+    if (!household) return { isSuccess: false, errorMessage: "Ogiltig kod" };
 
     const existingProfile = household.profiles?.find(
       (member: any) => member.uid === currentUserId
