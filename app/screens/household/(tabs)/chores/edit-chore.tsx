@@ -1,11 +1,10 @@
-import React, { useState, useEffect } from "react";
-import { View, StyleSheet, ScrollView, TouchableOpacity, Alert } from "react-native";
 import { useAppTheme } from "@/constants/app-theme";
-import { Text, TextInput, Button } from "react-native-paper";
-import { useLocalSearchParams, router } from "expo-router";
+import { Chore, updateChore } from "@/src/data/chores";
 import { useMutation } from "@tanstack/react-query";
-import { updateChore } from "@/src/data/chores";
-import { Chore } from "@/src/data/chores";
+import { router, useLocalSearchParams } from "expo-router";
+import React, { useState } from "react";
+import { Alert, ScrollView, StyleSheet, View } from "react-native";
+import { Button, Chip, Surface, Text, TextInput } from "react-native-paper";
 
 export default function EditChore() {
   const theme = useAppTheme();
@@ -21,7 +20,9 @@ export default function EditChore() {
 
   const [choreTitle, setChoreTitle] = useState(title || "");
   const [choreDescription, setChoreDescription] = useState(description || "");
-  const [choreFrequency, setChoreFrequency] = useState(Number(frequencyDays) || 7);
+  const [choreFrequency, setChoreFrequency] = useState(
+    Number(frequencyDays) || 7
+  );
   const [choreWeight, setChoreWeight] = useState(Number(weight) || 4);
 
   const daysOptions = Array.from({ length: 30 }, (_, i) => i + 1);
@@ -39,7 +40,7 @@ export default function EditChore() {
       Alert.alert("Sysslan har uppdaterats.");
       router.replace({
         pathname: "/screens/household/chores",
-        params: { householdId},
+        params: { householdId },
       });
     },
     onError: (err) => {
@@ -57,130 +58,120 @@ export default function EditChore() {
   };
 
   return (
-    <View style={[styles.container, { backgroundColor: theme.colors.background }]}>
-      <Text style={styles.header}>Redigera syssla</Text>
+    <ScrollView
+      style={[styles.container, { backgroundColor: theme.colors.background }]}
+    >
+      <View style={styles.content}>
+        <TextInput
+          label="Titel"
+          value={choreTitle}
+          onChangeText={setChoreTitle}
+          mode="outlined"
+          style={styles.input}
+        />
 
-      <TextInput
-        label="Titel"
-        value={choreTitle}
-        onChangeText={setChoreTitle}
-        mode="outlined"
-        style={styles.input}
-      />
+        <TextInput
+          label="Beskrivning"
+          value={choreDescription}
+          onChangeText={setChoreDescription}
+          mode="outlined"
+          multiline
+          numberOfLines={4}
+          style={[styles.input, { height: 120 }]}
+        />
 
-      <TextInput
-        label="Beskrivning"
-        value={choreDescription}
-        onChangeText={setChoreDescription}
-        mode="outlined"
-        multiline
-        numberOfLines={4}
-        style={[styles.input, { height: 120 }]}
-      />
+        <Surface style={styles.section} elevation={0}>
+          <Text variant="titleMedium" style={styles.sectionLabel}>
+            Återkommande (dagar):
+          </Text>
+          <View style={styles.chipContainer}>
+            {daysOptions.slice(0, 15).map((dayInterval) => (
+              <Chip
+                key={dayInterval}
+                selected={choreFrequency === dayInterval}
+                onPress={() => setChoreFrequency(dayInterval)}
+                style={styles.chip}
+                mode={choreFrequency === dayInterval ? "flat" : "outlined"}
+              >
+                {dayInterval}
+              </Chip>
+            ))}
+          </View>
+        </Surface>
 
-      <Text style={styles.sectionLabel}>Återkommande (dagar):</Text>
-      <ScrollView
-        horizontal
-        showsHorizontalScrollIndicator={false}
-        contentContainerStyle={styles.carouselContainer}
-      >
-        {daysOptions.map((d) => (
-          <TouchableOpacity
-            key={d}
-            style={[
-              styles.optionCircle,
-              {
-                backgroundColor:
-                  choreFrequency === d ? theme.colors.primary : theme.colors.surfaceVariant,
-              },
-            ]}
-            onPress={() => setChoreFrequency(d)}
+        <Surface style={styles.section} elevation={0}>
+          <Text variant="titleMedium" style={styles.sectionLabel}>
+            Värde
+          </Text>
+          <Text
+            variant="bodyMedium"
+            style={{ color: theme.colors.onSurfaceVariant, marginBottom: 12 }}
           >
-            <Text
-              style={{
-                color: choreFrequency === d ? theme.colors.background : theme.colors.onTertiary,
-                fontWeight: "600",
-              }}
-            >
-              {d}
-            </Text>
-          </TouchableOpacity>
-        ))}
-      </ScrollView>
+            Hur energikrävande är sysslan?
+          </Text>
+          <View style={styles.chipContainer}>
+            {valueOptions.map((v) => (
+              <Chip
+                key={v}
+                selected={choreWeight === v}
+                onPress={() => setChoreWeight(v)}
+                style={styles.chip}
+                mode={choreWeight === v ? "flat" : "outlined"}
+              >
+                {v}
+              </Chip>
+            ))}
+          </View>
+        </Surface>
 
-      <Text style={styles.sectionLabel}>Värde</Text>
-      <Text>Hur energikrävande är sysslan?</Text>
-      <ScrollView
-        horizontal
-        showsHorizontalScrollIndicator={false}
-        contentContainerStyle={styles.carouselContainer}
-      >
-        {valueOptions.map((v) => (
-          <TouchableOpacity
-            key={v}
-            style={[
-              styles.optionCircle,
-              {
-                backgroundColor:
-                  choreWeight === v ? theme.colors.primary : theme.colors.surfaceVariant,
-              },
-            ]}
-            onPress={() => setChoreWeight(v)}
-          >
-            <Text
-              style={{
-                color: choreWeight === v ? theme.colors.background : theme.colors.onTertiary,
-                fontWeight: "600",
-              }}
-            >
-              {v}
-            </Text>
-          </TouchableOpacity>
-        ))}
-      </ScrollView>
-
-      <Button
-        mode="contained"
-        onPress={handleSave}
-        loading={mutation.isPending}
-        disabled={mutation.isPending}
-        style={{ marginTop: 30 }}
-      >
-        {mutation.isPending ? "Sparar..." : "Uppdatera syssla"}
-      </Button>
-    </View>
+        <Button
+          mode="contained"
+          onPress={handleSave}
+          loading={mutation.isPending}
+          disabled={mutation.isPending}
+          style={styles.saveButton}
+          contentStyle={{ paddingVertical: 8 }}
+        >
+          {mutation.isPending ? "Sparar..." : "Uppdatera syssla"}
+        </Button>
+      </View>
+    </ScrollView>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+  },
+  content: {
     padding: 20,
   },
   header: {
-    fontSize: 22,
     fontWeight: "700",
-    marginBottom: 20,
+    marginBottom: 24,
   },
   input: {
     marginBottom: 20,
   },
+  section: {
+    marginBottom: 24,
+    padding: 16,
+    borderRadius: 12,
+  },
   sectionLabel: {
-    fontSize: 20,
     fontWeight: "600",
-    marginBottom: 10,
-    marginTop: 10,
+    marginBottom: 12,
   },
-  carouselContainer: {
+  chipContainer: {
     flexDirection: "row",
-    paddingVertical: 6,
+    flexWrap: "wrap",
+    gap: 8,
   },
-  optionCircle: {
-    width: 50,
-    height: 50,
-    borderRadius: 25,
-    alignItems: "center",
-    justifyContent: "center",
-    marginHorizontal: 6,
+  chip: {
+    marginBottom: 8,
+  },
+  saveButton: {
+    marginTop: 16,
+    marginBottom: 32,
   },
 });
