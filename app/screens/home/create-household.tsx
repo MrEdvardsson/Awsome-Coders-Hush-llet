@@ -63,7 +63,7 @@ export default function CreateHousehold() {
           { title, code },
           { profileName, selectedAvatar }
         );
-        queryClient.invalidateQueries({ queryKey: ["households", user!.uid] });
+        queryClient.invalidateQueries({ queryKey: ["user_extend", user!.uid] });
 
         Alert.alert("Hushåll skapat!");
       } else {

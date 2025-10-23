@@ -1,9 +1,8 @@
 import { useAuthUser } from "@/auth";
 import { useAppTheme } from "@/constants/app-theme";
-
+import { db } from "@/firebase-config";
 import {
   GetHousehold,
-  ListenToSingleHousehold,
   pendingMember,
   ProfileDb,
   UpdateCode,
@@ -11,7 +10,9 @@ import {
 } from "@/src/data/household-db";
 import generateCode from "@/utils/generateCode";
 import { Ionicons } from "@expo/vector-icons";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { router, useLocalSearchParams } from "expo-router";
+import { collection, doc, getDoc, getDocs } from "firebase/firestore";
 import { useEffect, useState } from "react";
 import { Alert, ScrollView, StyleSheet, View } from "react-native";
 import {
@@ -35,34 +36,112 @@ export default function InfoHousehold() {
   const { data } = useLocalSearchParams();
   const initialHousehold = JSON.parse(data as string) as GetHousehold;
   const [household, setHousehold] = useState<GetHousehold>(initialHousehold);
+  const [save, setSave] = useState(false);
+  const queryClient = useQueryClient();
+
+  const {
+    data: householdData,
+    isLoading,
+    isError,
+    error,
+  } = useQuery({
+    queryKey: ["households", household.id],
+    enabled: !!user?.uid && !!household?.id,
+    queryFn: async () => {
+      const householdRef = doc(db, "households", household.id!);
+      const householdSnap = await getDoc(householdRef);
+      if (!householdSnap.exists()) {
+        throw new Error("Household not found");
+      }
+      const householdData = {
+        id: householdSnap.id,
+        ...householdSnap.data(),
+      } as GetHousehold;
+
+      const profilesRef = collection(householdRef, "profiles");
+      const profilesSnap = await getDocs(profilesRef);
+      const profiles = profilesSnap.docs.map((d) => ({
+        id: d.id,
+        householdId: householdData.id,
+        ...d.data(),
+      }));
+
+      return {
+        ...householdData,
+        profiles,
+      } as GetHousehold;
+    },
+    refetchOnWindowFocus: true,
+    refetchOnReconnect: true,
+    staleTime: 1000 * 60 * 2,
+  });
 
   useEffect(() => {
-    const unsubscribe = ListenToSingleHousehold(household.id, (updated) => {
-      setHousehold(updated);
-
-      const me = updated?.profiles?.find((m) => m.uid === user!.uid);
-
+    if (householdData && user) {
+      const me = householdData.profiles?.find((m) => m.uid === user.uid);
       setIsOwner(me?.isOwner === true);
-    });
-    return () => unsubscribe();
-  }, [household.id]);
+    }
+  }, [householdData, user]);
+
+  const editTitleMutation = useMutation({
+    mutationFn: async (newTitle: string) => {
+      await UpdateTitle({
+        title: household.title,
+        newTitle,
+        code: household.code,
+      });
+      return newTitle;
+    },
+    onSuccess: (newTitle) => {
+      setHousehold((prev) => ({
+        ...prev,
+        title: newTitle,
+      }));
+      setSave(true);
+      queryClient.invalidateQueries({ queryKey: ["user_extend", user?.uid] });
+    },
+    onError: (error) => {
+      Alert.alert(
+        "Fel",
+        "Kunde inte uppdatera titel: " + (error as Error).message
+      );
+    },
+  });
+
+  const handleSetTitle = async () => {
+    editTitleMutation.mutate(title);
+    setSave(true);
+  };
+
+  const editHouseholdCode = useMutation({
+    mutationFn: async (newCode: string) => {
+      await UpdateCode({ code: household.code, newCode });
+      return newCode;
+    },
+    onSuccess: (newCode) => {
+      setHousehold((prev) => ({
+        ...prev,
+        code: newCode,
+      }));
+      setSave(true);
+      queryClient.invalidateQueries({
+        queryKey: ["user_extend", user?.uid],
+      });
+      queryClient.invalidateQueries({ queryKey: ["households", household.id] });
+    },
+    onError: (error) => {
+      Alert.alert(
+        "Fel",
+        "Kunde inte uppdatera kod: " + (error as Error).message
+      );
+    },
+  });
 
   const handleGenerateCode = async () => {
     const newCode = generateCode();
 
     setCode(newCode);
-
-    await UpdateCode({ code: household.code, newCode });
-  };
-
-  const handleSetTitle = async () => {
-    setTitle(title);
-
-    await UpdateTitle({
-      title: household.title,
-      newTitle: title,
-      code: household.code,
-    });
+    editHouseholdCode.mutate(newCode);
   };
 
   const handlePendingProfile = async (member: ProfileDb, accept: boolean) => {
@@ -81,6 +160,10 @@ export default function InfoHousehold() {
       params: { data: JSON.stringify(member) },
     });
   };
+
+  if (isLoading) return <Text>Laddar...</Text>;
+  if (isError) return <Text>Fel: {(error as Error).message}</Text>;
+  if (!householdData) return null; // skydd
 
   return (
     <SafeAreaView
@@ -103,7 +186,7 @@ export default function InfoHousehold() {
 
             <Surface style={styles.codeDisplay} elevation={0}>
               <Text variant="headlineSmall" style={styles.codeText}>
-                {household.code || "Ingen kod"}
+                {householdData.code || "Ingen kod"}
               </Text>
             </Surface>
 
@@ -145,7 +228,7 @@ export default function InfoHousehold() {
               <Button
                 mode="contained"
                 onPress={handleSetTitle}
-                disabled={!title.trim()}
+                disabled={!title.trim() && save}
                 compact
               >
                 Spara
@@ -166,13 +249,13 @@ export default function InfoHousehold() {
               Medlemmar
             </Text>
             <Chip mode="outlined" compact>
-              {household.profiles?.filter((item) => !item.isPending).length ||
-                0}
+              {householdData.profiles?.filter((item) => !item.isPending)
+                .length || 0}
             </Chip>
           </View>
 
           <View style={styles.profilesList}>
-            {household.profiles
+            {householdData.profiles
               ?.filter((item) => !item.isPending)
               .map((item, index) => (
                 <View key={item.id}>
@@ -208,8 +291,8 @@ export default function InfoHousehold() {
         </Surface>
 
         {isOwner &&
-          (household.profiles?.filter((item) => item.isPending).length ?? 0) >
-            0 && (
+          (householdData.profiles?.filter((item) => item.isPending).length ??
+            0) > 0 && (
             <View>
               <View style={styles.pendingHeader}>
                 <Ionicons
@@ -226,7 +309,7 @@ export default function InfoHousehold() {
                 </Chip>
               </View>
 
-              {household.profiles
+              {householdData.profiles
                 ?.filter((item) => item.isPending)
                 .map((item) => (
                   <Card
