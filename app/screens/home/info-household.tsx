@@ -275,7 +275,7 @@ export default function InfoHousehold() {
                         </Chip>
                       )}
                     </View>
-                    {isOwner && (
+                    {isOwner && item.uid !== user?.uid && (
                       <View style={styles.actionButtons}>
                         <IconButton
                           icon="cog-outline"
