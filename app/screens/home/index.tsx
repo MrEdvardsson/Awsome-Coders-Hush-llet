@@ -119,11 +119,14 @@ export default function Home() {
             ]}
             mode="elevated"
             elevation={2}
-            onPress={() =>
-              router.push({
-                pathname: "/screens/household/chores",
-                params: { householdId: item.id },
-              })
+            onPress={
+              item.userProfile?.isPaused
+                ? undefined
+                : () =>
+                    router.push({
+                      pathname: "/screens/household/chores",
+                      params: { householdId: item.id },
+                    })
             }
           >
             {item.userProfile?.isPaused && (
@@ -156,7 +159,11 @@ export default function Home() {
                 <IconButton
                   icon="information-outline"
                   size={24}
-                  onPress={() => handleInfoButton(item)}
+                  onPress={
+                    item.userProfile?.isPaused
+                      ? undefined
+                      : () => handleInfoButton(item)
+                  }
                 />
               )}
             />
