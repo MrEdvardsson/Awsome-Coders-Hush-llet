@@ -29,7 +29,7 @@ export default function Home() {
     queryFn: async () => {
       const ref = doc(db, "user_extend", user!.uid);
       const snap = await getDoc(ref);
-      if (!snap.exists()) throw new Error("User extend not found");
+      if (!snap.exists()) return []; // Return empty array for new users
       const data = snap.data() as UserExtends;
       return await validateHouseholdMembership(data);
     },
@@ -45,17 +45,38 @@ export default function Home() {
     });
   };
 
-  if (isLoading) return <Text>Laddar...</Text>;
-  if (isError) return <Text>Fel: {(error as Error).message}</Text>;
-  if (!households || households.length === 0)
-    return <Text>Inga hushåll hittades</Text>;
+  if (isLoading) {
+    return (
+      <View
+        style={[styles.container, { backgroundColor: theme.colors.background }]}
+      >
+        <View style={styles.emptyContainer}>
+          <Text>Laddar...</Text>
+        </View>
+      </View>
+    );
+  }
+
+  if (isError) {
+    return (
+      <View
+        style={[styles.container, { backgroundColor: theme.colors.background }]}
+      >
+        <View style={styles.emptyContainer}>
+          <Text style={{ color: theme.colors.error }}>
+            Fel: {(error as Error).message}
+          </Text>
+        </View>
+      </View>
+    );
+  }
 
   return (
     <View
       style={[styles.container, { backgroundColor: theme.colors.background }]}
     >
       <FlatList
-        data={households}
+        data={households || []}
         keyExtractor={(item) => item.id}
         contentContainerStyle={styles.listContent}
         ListEmptyComponent={
