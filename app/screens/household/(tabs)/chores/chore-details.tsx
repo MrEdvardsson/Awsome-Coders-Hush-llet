@@ -13,6 +13,7 @@ type ChoreParams = {
   weight: string;
   assignedTo?: string;
   daysSinceCompleted?: string;
+  lastCompletedAt?: string;
 };
 
 export default function ChoreDetail() {
@@ -26,12 +27,21 @@ export default function ChoreDetail() {
     weight,
     assignedTo,
     daysSinceCompleted,
+    lastCompletedAt,
   } = useLocalSearchParams<ChoreParams>();
 
   const daysSince = parseInt(daysSinceCompleted || "0");
   const frequency = parseInt(frequencyDays || "0");
   const isOverdue = daysSince > frequency;
   const daysOverdue = daysSince - frequency;
+  const hasBeenCompleted = !!lastCompletedAt;
+
+  const formatDaysSince = () => {
+    if (!hasBeenCompleted) return "Aldrig";
+    if (daysSince === 0) return "Idag";
+    if (daysSince === 1) return "Igår";
+    return `${daysSince} dagar sedan`;
+  };
 
   return (
     <ScrollView
@@ -102,7 +112,7 @@ export default function ChoreDetail() {
             variant="bodyLarge"
             style={{ color: theme.colors.onSurface, marginLeft: 8 }}
           >
-            Senast gjord: {daysSince} {daysSince === 1 ? "dag" : "dagar"} sedan
+            Senast gjord: {formatDaysSince()}
           </Text>
         </View>
 
@@ -122,7 +132,7 @@ export default function ChoreDetail() {
           </Text>
         </View>
 
-        {assignedTo && assignedTo.trim() !== "" && (
+        {assignedTo?.trim() && (
           <>
             <Divider style={{ marginVertical: 12 }} />
             <View style={styles.infoRow}>

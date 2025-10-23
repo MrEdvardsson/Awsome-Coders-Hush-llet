@@ -383,3 +383,17 @@ export async function updateProfileInHousehold(profile: ProfileDb) {
     throw error;
   }
 }
+
+export async function getUserProfileForHousehold(
+  householdId: string,
+  userId: string
+): Promise<ProfileDb | null> {
+  const profilesRef = collection(db, "households", householdId, "profiles");
+  const q = query(profilesRef, where("uid", "==", userId));
+  const snapshot = await getDocs(q);
+  
+  if (snapshot.empty) return null;
+  
+  const profileDoc = snapshot.docs[0];
+  return { id: profileDoc.id, ...profileDoc.data() } as ProfileDb;
+}
