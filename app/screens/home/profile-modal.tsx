@@ -113,7 +113,12 @@ export default function ProfileModal() {
             </Card>
             <Card style={style.cardStyle}>
               <Card.Content style={style.cardContent}>
-                <Text variant="headlineMedium">Pausad:</Text>
+                {!member.isPaused && (
+                  <Text variant="headlineMedium">Pausa:</Text>
+                )}
+                {member.isPaused && (
+                  <Text variant="headlineMedium">Aktivera:</Text>
+                )}
                 <Switch
                   value={member.isPaused}
                   onValueChange={(v) => setMember({ ...member, isPaused: v })}

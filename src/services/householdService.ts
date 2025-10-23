@@ -40,7 +40,7 @@ export async function validateAndGetHousehold(
       };
 
     const activeMembers = profiles.filter((p) => !p.isDeleted);
-    
+
     if (activeMembers.length >= 8) {
       return {
         isSuccess: false,
@@ -212,9 +212,14 @@ export async function validateHouseholdMembership(
     const profileData = profileSnap.data() as {
       isPending: boolean;
       isDeleted: boolean;
+      isPaused: boolean;
     };
 
-    if (!profileData.isPending && !profileData.isDeleted) {
+    if (
+      !profileData.isPending &&
+      !profileData.isDeleted &&
+      !profileData.isPaused
+    ) {
       validHouseholds.push({
         id: householdId,
         ...householdData,
