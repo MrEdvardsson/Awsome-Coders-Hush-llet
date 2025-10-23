@@ -1,7 +1,7 @@
 import { useAppTheme } from "@/constants/app-theme";
 import { ProfileDb, updateProfileInHousehold } from "@/src/data/household-db";
 import { Ionicons } from "@expo/vector-icons";
-import { useMutation } from "@tanstack/react-query";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { useState } from "react";
 import {
@@ -15,6 +15,7 @@ import { Card, Switch, Text } from "react-native-paper";
 
 export default function ProfileModal() {
   const theme = useAppTheme();
+  const queryClient = useQueryClient();
   const router = useRouter();
   const { data } = useLocalSearchParams();
   const initialMember = JSON.parse(data as string) as ProfileDb;
@@ -22,8 +23,12 @@ export default function ProfileModal() {
 
   const updateMemberMutation = useMutation({
     mutationFn: updateProfileInHousehold,
-    onSuccess: () => {
-      console.log("✅ Member updated!");
+    onSuccess: (updatedProfile) => {
+      queryClient.setQueryData(["profiles", updatedProfile.id], updatedProfile);
+
+      queryClient.invalidateQueries({
+        queryKey: ["households", updatedProfile.householdId],
+      });
       router.back();
     },
     onError: (error) => {
@@ -108,7 +113,7 @@ export default function ProfileModal() {
             </Card>
             <Card style={style.cardStyle}>
               <Card.Content style={style.cardContent}>
-                <Text variant="headlineMedium">isPaused</Text>
+                <Text variant="headlineMedium">Pausad:</Text>
                 <Switch
                   value={member.isPaused}
                   onValueChange={(v) => setMember({ ...member, isPaused: v })}

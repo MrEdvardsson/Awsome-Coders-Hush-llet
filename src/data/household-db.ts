@@ -370,8 +370,15 @@ export async function updateProfileInHousehold(profile: ProfileDb) {
 
     await updateDoc(profileRef, updated);
 
+    const updatedSnap = await getDoc(profileRef);
+    const updatedProfile = updatedSnap.data() as ProfileDb;
+
     console.log("✅ Profile updated in subcollection!");
-    return true;
+    return {
+      ...updatedProfile,
+      id: profile.id,
+      householdId: profile.householdId,
+    };
   } catch (error) {
     console.error("❌ Error updating profile:", error);
     throw error;
