@@ -4,6 +4,7 @@ import {
   GetHousehold,
   getHouseholdByGeneratedCode,
   getHouseholdByInvitationCode,
+  getprofilesForHousehold,
   joinHousehold,
   ProfileDb,
   UserExtends,
@@ -30,22 +31,38 @@ export async function validateAndGetHousehold(
     );
     if (!household) return { isSuccess: false, errorMessage: "Ogiltig kod" };
 
-    const existingProfile = household.profiles?.find(
-      (member: any) => member.uid === currentUserId
+    const profiles = await getprofilesForHousehold(household.id);
+
+    if (profiles.length === 0)
+      return {
+        isSuccess: false,
+        errorMessage: "Inga profiler hittades",
+      };
+
+    const existingProfile = profiles.find(
+      (member) => member.uid === currentUserId
     );
 
-    if (existingProfile)
+    if (existingProfile) {
+      if (existingProfile.isPending) {
+        return {
+          isSuccess: false,
+          errorMessage: "Du har redan ansökt till detta hushållet",
+        };
+      }
+
+      if (profiles.length === 8)
+        return {
+          isSuccess: false,
+          errorMessage: "Hushållet är fullt (max 8 medlemmar)",
+        };
+
       return {
         isSuccess: false,
         errorMessage: "Du är redan medlem i detta hushåll",
       };
-
-    if (household.profiles?.length === 8)
-      return {
-        isSuccess: false,
-        errorMessage: "Hushållet är fullt (max 8 medlemmar)",
-      };
-
+    }
+    household.profiles = profiles;
     return { isSuccess: true, houseHold: household };
   } catch (error) {
     //TODO sätta upp felmeddelande hantering.

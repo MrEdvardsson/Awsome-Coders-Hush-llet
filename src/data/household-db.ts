@@ -33,7 +33,7 @@ export interface GetHousehold {
   id: string;
   title: string;
   code: string;
-  profiles?: ProfileDb[];
+  profiles: ProfileDb[];
 }
 
 export interface UserExtends {
@@ -186,9 +186,12 @@ export function ListenToSingleHousehold(
   // Also listen to changes in profiles subcollection
   const unsubscribeProfiles = onSnapshot(profilesRef, async () => {
     const householdSnap = await getDoc(householdRef);
-    
+
     if (householdSnap.exists()) {
-      const household = { id: householdSnap.id, ...householdSnap.data() } as GetHousehold;
+      const household = {
+        id: householdSnap.id,
+        ...householdSnap.data(),
+      } as GetHousehold;
 
       const profileSnap = await getDocs(profilesRef);
       const profiles = profileSnap.docs.map((d) => ({
@@ -250,15 +253,25 @@ export async function getHouseholdByInvitationCode(
   return houseHold;
 }
 
+export async function getprofilesForHousehold(
+  houseId: string
+): Promise<ProfileDb[]> {
+  const profileRef = collection(db, HOUSEHOLDS, houseId, PROFILES);
+  const snapshot = await getDocs(profileRef);
+  if (snapshot.empty) return [];
+  const profiles = snapshot.docs.map(
+    (doc) => ({ id: doc.id, ...doc.data() } as ProfileDb)
+  );
+  return profiles;
+}
+
 export async function joinHousehold(
   houseHold: GetHousehold,
   userId: string,
   profile: ProfileDb
 ) {
   const houseHoldRef = doc(db, HOUSEHOLDS, houseHold.id);
-  const profileRef = doc(
-    collection(db, HOUSEHOLDS, houseHold.id, PROFILES)
-  );
+  const profileRef = doc(collection(db, HOUSEHOLDS, houseHold.id, PROFILES));
   const userExtendRef = doc(db, USEREXTENDS, userId);
 
   const profileData: ProfileDb = {
