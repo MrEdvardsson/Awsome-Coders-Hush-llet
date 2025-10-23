@@ -10,12 +10,11 @@ import { Button, Surface, Text, TextInput } from "react-native-paper";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 export default function JoinHousehold() {
-  const automaticCode = "89170R3BG3";
   const theme = useAppTheme();
   const { data: user } = useAuthUser();
 
   const [isSuccess, setIssuccess] = useState<boolean>(false);
-  const [invitationCode, setInvitationCode] = useState(automaticCode);
+  const [invitationCode, setInvitationCode] = useState("");
   const [error, setError] = useState<string | undefined>("");
 
   const query = useQuery({

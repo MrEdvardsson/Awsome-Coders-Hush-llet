@@ -39,6 +39,15 @@ export async function validateAndGetHousehold(
         errorMessage: "Inga profiler hittades",
       };
 
+    const activeMembers = profiles.filter((p) => !p.isDeleted);
+    
+    if (activeMembers.length >= 8) {
+      return {
+        isSuccess: false,
+        errorMessage: "Hushållet är fullt (max 8 medlemmar)",
+      };
+    }
+
     const existingProfile = profiles.find(
       (member) => member.uid === currentUserId
     );
@@ -50,12 +59,6 @@ export async function validateAndGetHousehold(
           errorMessage: "Du har redan ansökt till detta hushållet",
         };
       }
-
-      if (profiles.length === 8)
-        return {
-          isSuccess: false,
-          errorMessage: "Hushållet är fullt (max 8 medlemmar)",
-        };
 
       return {
         isSuccess: false,
