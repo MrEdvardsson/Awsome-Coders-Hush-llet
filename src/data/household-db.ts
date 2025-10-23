@@ -29,6 +29,9 @@ export interface GetHousehold {
   title: string;
   code: string;
   profiles: ProfileDb[];
+  userProfile: {
+    isPaused: boolean;
+  };
 }
 
 export interface UserExtends {
@@ -370,8 +373,15 @@ export async function updateProfileInHousehold(profile: ProfileDb) {
 
     await updateDoc(profileRef, updated);
 
+    const updatedSnap = await getDoc(profileRef);
+    const updatedProfile = updatedSnap.data() as ProfileDb;
+
     console.log("✅ Profile updated in subcollection!");
-    return true;
+    return {
+      ...updatedProfile,
+      id: profile.id,
+      householdId: profile.householdId,
+    };
   } catch (error) {
     console.error("❌ Error updating profile:", error);
     throw error;
@@ -385,9 +395,9 @@ export async function getUserProfileForHousehold(
   const profilesRef = collection(db, "households", householdId, "profiles");
   const q = query(profilesRef, where("uid", "==", userId));
   const snapshot = await getDocs(q);
-  
+
   if (snapshot.empty) return null;
-  
+
   const profileDoc = snapshot.docs[0];
   return { id: profileDoc.id, ...profileDoc.data() } as ProfileDb;
 }

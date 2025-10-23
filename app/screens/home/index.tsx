@@ -110,16 +110,38 @@ export default function Home() {
         }
         renderItem={({ item }) => (
           <Card
-            style={styles.householdCard}
+            style={[
+              styles.householdCard,
+              item.userProfile.isPaused && {
+                opacity: 0.5,
+                backgroundColor: "#00000010",
+              },
+            ]}
             mode="elevated"
             elevation={2}
-            onPress={() =>
-              router.push({
-                pathname: "/screens/household/chores",
-                params: { householdId: item.id },
-              })
+            onPress={
+              item.userProfile?.isPaused
+                ? undefined
+                : () =>
+                    router.push({
+                      pathname: "/screens/household/chores",
+                      params: { householdId: item.id },
+                    })
             }
           >
+            {item.userProfile?.isPaused && (
+              <Card.Content>
+                <Text
+                  style={{
+                    color: "#fffefeff",
+                    fontStyle: "italic",
+                    marginTop: 4,
+                  }}
+                >
+                  Pausad
+                </Text>
+              </Card.Content>
+            )}
             <Card.Title
               title={item.title}
               titleVariant="titleLarge"
@@ -137,7 +159,11 @@ export default function Home() {
                 <IconButton
                   icon="information-outline"
                   size={24}
-                  onPress={() => handleInfoButton(item)}
+                  onPress={
+                    item.userProfile?.isPaused
+                      ? undefined
+                      : () => handleInfoButton(item)
+                  }
                 />
               )}
             />

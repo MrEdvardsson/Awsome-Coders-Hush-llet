@@ -248,7 +248,7 @@ export default function InfoHousehold() {
             <Text variant="titleMedium" style={styles.sectionTitle}>
               Medlemmar
             </Text>
-            <Chip mode="outlined" compact>
+            <Chip key={householdData.id} mode="outlined" compact>
               {householdData.profiles?.filter((item) => !item.isPending)
                 .length || 0}
             </Chip>
@@ -260,10 +260,21 @@ export default function InfoHousehold() {
               .map((item, index) => (
                 <View key={item.id}>
                   {index > 0 && <Divider />}
-                  <View style={styles.memberItem}>
+                  <View
+                    style={[
+                      styles.memberItem,
+                      item.isPaused && {
+                        opacity: 0.5,
+                        backgroundColor: "#00000010",
+                      },
+                    ]}
+                  >
                     <View style={styles.memberInfo}>
                       <Text style={styles.avatar}>{item.selectedAvatar}</Text>
                       <Text variant="titleMedium">{item.profileName}</Text>
+                      {item.isPaused && (
+                        <Text variant="headlineMedium">Pausad!</Text>
+                      )}
                       {item.isOwner && (
                         <Chip
                           mode="flat"
@@ -275,7 +286,7 @@ export default function InfoHousehold() {
                         </Chip>
                       )}
                     </View>
-                    {isOwner && item.uid !== user?.uid && (
+                    {isOwner && (
                       <View style={styles.actionButtons}>
                         <IconButton
                           icon="cog-outline"
