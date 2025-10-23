@@ -1,6 +1,6 @@
-import { Tabs } from "expo-router";
 import { useAppTheme } from "@/constants/app-theme";
 import { Ionicons } from "@expo/vector-icons";
+import { Tabs } from "expo-router";
 
 export default function HouseholdLayout() {
   const theme = useAppTheme();

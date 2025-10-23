@@ -12,7 +12,7 @@ export default function HomeLayout() {
         headerTitleStyle: {
           color: theme.colors.onSurface,
         },
-        animation: "none",
+        animation: "slide_from_right",
         headerRight: () => <HeaderMenu />,
       }}
     >
@@ -33,6 +33,15 @@ export default function HomeLayout() {
       <Stack.Screen
         name="info-household"
         options={{ title: "Hushålls Info" }}
+      />
+      <Stack.Screen
+        name="profile-modal"
+        options={{
+          presentation: "transparentModal",
+          title: "Profilinfo",
+          animation: "default",
+          headerShown: false,
+        }}
       />
     </Stack>
   );

@@ -2,10 +2,11 @@ import { useAuthUser } from "@/auth";
 import ChooseProfile from "@/components/household/chose-profile";
 import { useAppTheme } from "@/constants/app-theme";
 import { validateAndGetHousehold } from "@/src/services/householdService";
+import { Ionicons } from "@expo/vector-icons";
 import { useQuery } from "@tanstack/react-query";
 import React, { useState } from "react";
 import { KeyboardAvoidingView, Platform, StyleSheet, View } from "react-native";
-import { Button, Text, TextInput } from "react-native-paper";
+import { Button, Surface, Text, TextInput } from "react-native-paper";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 export default function JoinHousehold() {
@@ -41,44 +42,73 @@ export default function JoinHousehold() {
           keyboardVerticalOffset={Platform.OS === "ios" ? 0 : 20}
         >
           <View style={style.content}>
-            <View style={{ marginBottom: theme.custom.spacing.md }}>
-              <Text
-                variant="titleLarge"
-                style={{ color: theme.colors.onSurface }}
-              >
-                Inbjudningskod
-              </Text>
-            </View>
-            <TextInput
-              mode="outlined"
-              placeholder="Ange inbjudningskod"
-              value={invitationCode}
-              onChangeText={setInvitationCode}
-              style={{ backgroundColor: theme.colors.surface }}
-              outlineColor={theme.colors.outline}
-              activeOutlineColor={theme.colors.primary}
-            />
-            <Button
-              mode="contained"
-              onPress={handleOnClick}
-              style={{ marginTop: theme.custom.spacing.md }}
-              disabled={invitationCode.length < 5}
-              loading={query.isLoading}
-            >
-              Gå med i hushåll
-            </Button>
-            {error ? (
-              <Text
-                variant="bodyMedium"
+            <Surface style={style.card} elevation={2}>
+              <View style={{ alignItems: "center", marginBottom: 24 }}>
+                <Ionicons
+                  name="home-outline"
+                  size={64}
+                  color={theme.colors.primary}
+                />
+                <Text
+                  variant="headlineSmall"
+                  style={{ marginTop: 16, fontWeight: "600" }}
+                >
+                  Gå med i hushåll
+                </Text>
+                <Text
+                  variant="bodyMedium"
+                  style={{
+                    marginTop: 8,
+                    color: theme.colors.onSurfaceVariant,
+                    textAlign: "center",
+                  }}
+                >
+                  Ange inbjudningskoden du fått från hushållets ägare
+                </Text>
+              </View>
+
+              <TextInput
+                mode="outlined"
+                label="Inbjudningskod"
+                placeholder="Ange kod"
+                value={invitationCode}
+                onChangeText={setInvitationCode}
                 style={{
-                  color: theme.colors.error,
-                  textAlign: "center",
-                  marginTop: 10,
+                  backgroundColor: theme.colors.surface,
+                  marginBottom: 16,
                 }}
+                left={<TextInput.Icon icon="key-outline" />}
+              />
+
+              <Button
+                mode="contained"
+                onPress={handleOnClick}
+                disabled={invitationCode.length < 5}
+                loading={query.isLoading}
+                contentStyle={{ paddingVertical: 8 }}
               >
-                {error}
-              </Text>
-            ) : null}
+                {query.isLoading ? "Kontrollerar..." : "Gå med"}
+              </Button>
+
+              {error && (
+                <Surface
+                  style={{
+                    marginTop: 16,
+                    padding: 12,
+                    borderRadius: 8,
+                    backgroundColor: theme.colors.errorContainer,
+                  }}
+                  elevation={0}
+                >
+                  <Text
+                    variant="bodyMedium"
+                    style={{ color: theme.colors.error, textAlign: "center" }}
+                  >
+                    {error}
+                  </Text>
+                </Surface>
+              )}
+            </Surface>
           </View>
         </KeyboardAvoidingView>
       </SafeAreaView>
@@ -102,6 +132,9 @@ const style = StyleSheet.create({
     flex: 1,
     padding: 20,
     justifyContent: "center",
-    marginBottom: 50,
+  },
+  card: {
+    padding: 24,
+    borderRadius: 16,
   },
 });

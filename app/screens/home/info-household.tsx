@@ -2,22 +2,28 @@ import { useAuthUser } from "@/auth";
 import { useAppTheme } from "@/constants/app-theme";
 
 import {
+  GetHousehold,
   ListenToSingleHousehold,
+  pendingMember,
+  ProfileDb,
   UpdateCode,
   UpdateTitle,
 } from "@/src/data/household-db";
 import generateCode from "@/utils/generateCode";
 import { Ionicons } from "@expo/vector-icons";
-import { useLocalSearchParams } from "expo-router";
+import { router, useLocalSearchParams } from "expo-router";
 import { useEffect, useState } from "react";
+import { Alert, ScrollView, StyleSheet, View } from "react-native";
 import {
-  Alert,
-  FlatList,
-  StyleSheet,
-  TouchableOpacity,
-  View,
-} from "react-native";
-import { Button, Card, Text, TextInput } from "react-native-paper";
+  Button,
+  Card,
+  Chip,
+  Divider,
+  IconButton,
+  Surface,
+  Text,
+  TextInput,
+} from "react-native-paper";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 export default function InfoHousehold() {
@@ -25,29 +31,32 @@ export default function InfoHousehold() {
   const [title, setTitle] = useState("");
   const [code, setCode] = useState("");
   const { data: user } = useAuthUser();
-  const isAdmin = true;
+  const [isOwner, setIsOwner] = useState(false);
   const { data } = useLocalSearchParams();
-  const initialHousehold = JSON.parse(data as string) as Household;
-  const [household, setHousehold] = useState<Household>(initialHousehold);
+  const initialHousehold = JSON.parse(data as string) as GetHousehold;
+  const [household, setHousehold] = useState<GetHousehold>(initialHousehold);
 
   useEffect(() => {
     const unsubscribe = ListenToSingleHousehold(household.id, (updated) => {
-      console.log("Hushållet uppdaterat i realtid:", updated);
       setHousehold(updated);
+
+      const me = updated?.profiles?.find((m) => m.uid === user!.uid);
+
+      setIsOwner(me?.isOwner === true);
     });
     return () => unsubscribe();
   }, [household.id]);
 
   const handleGenerateCode = async () => {
     const newCode = generateCode();
-    console.log("Genererar kod! " + newCode);
+
     setCode(newCode);
 
     await UpdateCode({ code: household.code, newCode });
   };
 
   const handleSetTitle = async () => {
-    const newTitle = setTitle(title);
+    setTitle(title);
 
     await UpdateTitle({
       title: household.title,
@@ -56,266 +65,343 @@ export default function InfoHousehold() {
     });
   };
 
+  const handlePendingProfile = async (member: ProfileDb, accept: boolean) => {
+    if (accept) {
+      console.log("Accepterar");
+      await pendingMember(household.id, member.id, false);
+    } else {
+      console.log("Nekar");
+      await pendingMember(household.id, member.id, true);
+    }
+  };
+
+  const handleProfileSettings = (member: ProfileDb) => {
+    router.push({
+      pathname: "./profile-modal",
+      params: { data: JSON.stringify(member) },
+    });
+  };
+
   return (
-    <SafeAreaView style={{ backgroundColor: theme.colors.background }}>
-      <View
-        style={{
-          flexDirection: "row",
-          alignItems: "center",
-          justifyContent: "center",
-          marginHorizontal: 10,
-          marginVertical: 12,
-          backgroundColor: theme.colors.tertiary,
-          borderRadius: 12,
-          paddingRight: 12,
-        }}
-      >
-        <View
-          style={[styles.houseCode, { backgroundColor: theme.colors.tertiary }]}
-        >
-          <Text
-            variant="titleLarge"
-            style={{
-              backgroundColor: theme.colors.tertiary,
-              textAlign: "center",
-            }}
-          >
-            {household.code || "Ingen Kod hittades"}
-          </Text>
-        </View>
-        {isAdmin && (
-          <Button
-            mode="contained"
-            onPress={handleGenerateCode}
-            buttonColor={theme.colors.primary}
-            textColor={theme.colors.onPrimary}
-          >
-            Skapa ny kod
-          </Button>
-        )}
-      </View>
-      <View>
-        {isAdmin && (
-          <View style={{ borderBottomWidth: 1 }}>
-            <Text
-              variant="titleMedium"
-              style={{
-                color: theme.colors.onSurface,
-                paddingLeft: 12,
-                paddingTop: 5,
-              }}
-            >
-              Ange ny titel:
-            </Text>
-            <View style={styles.titleInputRow}>
-              <Card style={[styles.titleInput, { flex: 3 }]}>
-                <TextInput
-                  mode="outlined"
-                  placeholder={household.title || "Titel saknas"}
-                  value={title}
-                  onChangeText={setTitle}
-                  style={{ backgroundColor: theme.colors.surface }}
-                  outlineColor={theme.colors.outline}
-                  activeOutlineColor={theme.colors.primary}
-                />
-              </Card>
-              <TouchableOpacity
-                style={[
-                  styles.toucheableSaveButton,
-                  { backgroundColor: theme.colors.primary },
-                ]}
-                onPress={() => handleSetTitle()}
-              >
-                <Text variant="titleMedium" style={{ color: "white" }}>
-                  Spara
-                </Text>
-              </TouchableOpacity>
+    <SafeAreaView
+      style={[styles.container, { backgroundColor: theme.colors.background }]}
+      edges={["bottom"]}
+    >
+      <ScrollView contentContainerStyle={styles.scrollContent}>
+        <Surface style={styles.codeSection} elevation={2}>
+          <View style={styles.codeSectionContent}>
+            <View style={styles.codeHeader}>
+              <Ionicons
+                name="key-outline"
+                size={24}
+                color={theme.colors.primary}
+              />
+              <Text variant="titleLarge" style={styles.sectionTitle}>
+                Hushållskod
+              </Text>
             </View>
-          </View>
-        )}
-      </View>
-      <View style={styles.flatlistView}>
-        <FlatList<Member>
-          style={[
-            styles.flatlistNotPending,
-            { backgroundColor: theme.colors.background },
-          ]}
-          data={household.members?.filter((item) => !item.isPending)}
-          keyExtractor={(item) => item.id}
-          renderItem={({ item }) => (
-            <Card style={styles.card}>
-              <Card.Title
-                title={item.profileName}
-                left={() => (
-                  <Text style={{ fontSize: 28, marginLeft: 8 }}>
-                    {item.selectedAvatar}
-                  </Text>
-                )}
-                right={() =>
-                  isAdmin && (
-                    <TouchableOpacity
-                      onPress={() =>
-                        console.log("Nu tog du bort " + item.profileName)
-                      }
-                    >
-                      <Ionicons
-                        name="trash"
-                        size={24}
-                        color={theme.colors.onSurface}
-                        style={styles.trashIcon}
-                      />
-                    </TouchableOpacity>
-                  )
-                }
-              ></Card.Title>
-            </Card>
-          )}
-        ></FlatList>
-      </View>
-      <View>
-        {isAdmin && (
-          <FlatList<Member>
-            style={[
-              styles.flatlistPending,
-              { backgroundColor: theme.colors.background },
-            ]}
-            data={household.members?.filter((item) => item.isPending)}
-            keyExtractor={(item) => item.id}
-            renderItem={({ item }) => (
-              <Card style={styles.card}>
-                <Card.Title
-                  title={item.profileName}
-                  left={() => (
-                    <Text style={{ fontSize: 28, marginLeft: 8 }}>
-                      {item.selectedAvatar}
-                    </Text>
-                  )}
-                  right={() => (
-                    <View style={styles.iconView}>
-                      <TouchableOpacity
-                        onPress={() =>
-                          console.log("Nu accepterade du " + item.profileName)
-                        }
-                      >
-                        <Ionicons
-                          name="checkmark-sharp"
-                          size={24}
-                          color={"lightgreen"}
-                          style={styles.iconCheckmark}
-                        />
-                      </TouchableOpacity>
-                      <TouchableOpacity
-                        onPress={() =>
-                          Alert.alert(
-                            "Bekräfta åtgärd",
-                            `Vill du verkligen acceptera ${item.profileName}?`,
-                            [
-                              {
-                                text: "Ja",
-                                onPress: () =>
-                                  console.log("Förfrågan accepterad!"),
-                              },
-                              {
-                                text: "Nej",
-                                style: "cancel",
-                              },
-                            ]
-                          )
-                        }
-                      >
-                        <Ionicons
-                          name="close"
-                          size={24}
-                          color={"red"}
-                          style={styles.trashIcon}
-                        />
-                      </TouchableOpacity>
-                    </View>
-                  )}
-                ></Card.Title>
-              </Card>
+
+            <Surface style={styles.codeDisplay} elevation={0}>
+              <Text variant="headlineSmall" style={styles.codeText}>
+                {household.code || "Ingen kod"}
+              </Text>
+            </Surface>
+
+            {isOwner && (
+              <Button
+                mode="contained"
+                onPress={handleGenerateCode}
+                icon="refresh"
+                style={styles.generateButton}
+              >
+                Skapa ny kod
+              </Button>
             )}
-          ></FlatList>
+          </View>
+        </Surface>
+
+        {/* Titel-sektion */}
+        {isOwner && (
+          <Surface style={styles.section} elevation={1}>
+            <View style={styles.sectionHeader}>
+              <Ionicons
+                name="create-outline"
+                size={20}
+                color={theme.colors.primary}
+              />
+              <Text variant="titleMedium" style={styles.sectionTitle}>
+                Ändra hushållstitel
+              </Text>
+            </View>
+            <View style={styles.titleRow}>
+              <TextInput
+                mode="outlined"
+                placeholder={household.title || "Titel saknas"}
+                value={title}
+                onChangeText={setTitle}
+                style={styles.titleInput}
+                dense
+              />
+              <Button
+                mode="contained"
+                onPress={handleSetTitle}
+                disabled={!title.trim()}
+                compact
+              >
+                Spara
+              </Button>
+            </View>
+          </Surface>
         )}
-      </View>
+
+        {/* Medlemmar-sektion */}
+        <Surface style={styles.section} elevation={1}>
+          <View style={styles.sectionHeader}>
+            <Ionicons
+              name="people-outline"
+              size={20}
+              color={theme.colors.primary}
+            />
+            <Text variant="titleMedium" style={styles.sectionTitle}>
+              Medlemmar
+            </Text>
+            <Chip mode="outlined" compact>
+              {household.profiles?.filter((item) => !item.isPending).length ||
+                0}
+            </Chip>
+          </View>
+
+          <View style={styles.profilesList}>
+            {household.profiles
+              ?.filter((item) => !item.isPending)
+              .map((item, index) => (
+                <View key={item.id}>
+                  {index > 0 && <Divider />}
+                  <View style={styles.memberItem}>
+                    <View style={styles.memberInfo}>
+                      <Text style={styles.avatar}>{item.selectedAvatar}</Text>
+                      <Text variant="titleMedium">{item.profileName}</Text>
+                      {item.isOwner && (
+                        <Chip
+                          mode="flat"
+                          compact
+                          icon="crown"
+                          style={styles.ownerChip}
+                        >
+                          Ägare
+                        </Chip>
+                      )}
+                    </View>
+                    {isOwner && (
+                      <View style={styles.actionButtons}>
+                        <IconButton
+                          icon="cog-outline"
+                          size={20}
+                          onPress={() => handleProfileSettings(item)}
+                        />
+                      </View>
+                    )}
+                  </View>
+                </View>
+              ))}
+          </View>
+        </Surface>
+
+        {isOwner &&
+          (household.profiles?.filter((item) => item.isPending).length ?? 0) >
+            0 && (
+            <View>
+              <View style={styles.pendingHeader}>
+                <Ionicons
+                  name="time-outline"
+                  size={20}
+                  color={theme.colors.primary}
+                />
+                <Text variant="titleMedium" style={styles.sectionTitle}>
+                  Väntande förfrågningar
+                </Text>
+                <Chip mode="outlined" compact>
+                  {household.profiles?.filter((item) => item.isPending)
+                    .length || 0}
+                </Chip>
+              </View>
+
+              {household.profiles
+                ?.filter((item) => item.isPending)
+                .map((item) => (
+                  <Card
+                    key={item.id}
+                    style={styles.pendingCard}
+                    mode="elevated"
+                    elevation={1}
+                  >
+                    <Card.Content style={styles.pendingCardContent}>
+                      <View style={styles.pendingMemberInfo}>
+                        <Text style={styles.avatar}>{item.selectedAvatar}</Text>
+                        <Text variant="titleMedium">{item.profileName}</Text>
+                      </View>
+                      <View style={styles.actionButtons}>
+                        <IconButton
+                          icon="check"
+                          iconColor={theme.colors.primary}
+                          containerColor={theme.colors.primaryContainer}
+                          size={20}
+                          onPress={() => {
+                            Alert.alert(
+                              "Acceptera medlem",
+                              `Vill du acceptera ${item.profileName}?`,
+                              [
+                                { text: "Avbryt", style: "cancel" },
+                                {
+                                  text: "Acceptera",
+                                  onPress: () =>
+                                    handlePendingProfile(item, true),
+                                },
+                              ]
+                            );
+                          }}
+                        />
+                        <IconButton
+                          icon="close"
+                          iconColor={theme.colors.error}
+                          containerColor={theme.colors.errorContainer}
+                          size={20}
+                          onPress={() => {
+                            Alert.alert(
+                              "Neka medlem",
+                              `Vill du neka ${item.profileName}?`,
+                              [
+                                { text: "Avbryt", style: "cancel" },
+                                {
+                                  text: "Neka",
+                                  style: "destructive",
+                                  onPress: () =>
+                                    handlePendingProfile(item, false),
+                                },
+                              ]
+                            );
+                          }}
+                        />
+                      </View>
+                    </Card.Content>
+                  </Card>
+                ))}
+            </View>
+          )}
+      </ScrollView>
     </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
-  backButton: {
-    marginRight: 10,
+  container: {
+    flex: 1,
   },
-  header: {
+  scrollContent: {
+    padding: 16,
+    paddingBottom: 32,
+  },
+  codeSection: {
+    borderRadius: 16,
+    padding: 20,
+    marginBottom: 16,
+  },
+  codeSectionContent: {
+    alignItems: "center",
+    gap: 16,
+  },
+  codeHeader: {
     flexDirection: "row",
     alignItems: "center",
-    paddingHorizontal: 16,
-    paddingVertical: 10,
-    borderBottomWidth: 1,
+    gap: 8,
   },
-  flatlistView: {
-    borderBottomWidth: 1,
-  },
-  flatlistNotPending: {
-    marginVertical: 10,
-  },
-  flatlistPending: {
-    marginTop: 10,
-  },
-  card: {
-    margin: 10,
-    borderRadius: 15,
-  },
-  houseCode: {
-    flex: 1, // tar upp tillgänglig plats
-    paddingRight: 12,
+  codeDisplay: {
+    paddingHorizontal: 24,
+    paddingVertical: 12,
     borderRadius: 12,
+  },
+  codeText: {
+    fontWeight: "bold",
+    letterSpacing: 4,
+  },
+  generateButton: {
+    marginTop: 8,
+  },
+  section: {
+    borderRadius: 16,
+    padding: 16,
+    marginBottom: 16,
+  },
+  sectionHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+    marginBottom: 16,
+  },
+  sectionTitle: {
+    fontWeight: "600",
+    flex: 1,
+  },
+  titleRow: {
+    flexDirection: "row",
+    gap: 8,
+    alignItems: "center",
+  },
+  titleInput: {
+    flex: 1,
+  },
+  profilesList: {
+    gap: 8,
+  },
+  memberItem: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
     paddingVertical: 12,
   },
-  trashIcon: {
-    margin: 10,
-  },
-  iconView: {
+  memberInfo: {
     flexDirection: "row",
     alignItems: "center",
-  },
-  iconCheckmark: {},
-  titleInput: {
-    marginHorizontal: 10,
-    marginBottom: 20,
-    borderRadius: 15,
-    elevation: 2,
-    shadowColor: "#000",
-    shadowOpacity: 0.15,
-    shadowRadius: 4,
-    shadowOffset: { width: 0, height: 2 },
-  },
-  titleInputRow: {
-    flexDirection: "row",
-    justifyContent: "center",
-  },
-  toucheableSaveButton: {
+    gap: 12,
     flex: 1,
-    height: "auto",
-    borderRadius: 25,
+  },
+  avatar: {
+    fontSize: 32,
+  },
+  ownerChip: {
+    marginLeft: 8,
+  },
+  actionButtons: {
+    flexDirection: "row",
+    gap: 4,
+  },
+  pendingHeader: {
+    flexDirection: "row",
     alignItems: "center",
-    justifyContent: "center",
-    marginRight: 8,
-    marginBottom: 20,
+    gap: 8,
+    marginBottom: 12,
+    paddingHorizontal: 4,
+  },
+  pendingCard: {
+    marginBottom: 12,
+    borderRadius: 12,
+  },
+  pendingCardContent: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    paddingVertical: 8,
+  },
+  pendingMemberInfo: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 12,
+    flex: 1,
   },
 });
 
-interface Member {
-  id: string;
-  profileName: string;
-  selectedAvatar: string;
-  isPending: boolean;
-  isOwner: boolean;
-}
-
-interface Household {
+export interface Household {
   id: string;
   title: string;
   code: string;
-  members: Member[];
 }

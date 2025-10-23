@@ -1,8 +1,8 @@
+import HeaderMenu from "@/components/header-menu";
 import { Stack } from "expo-router";
 import * as SplashScreen from "expo-splash-screen";
 import { useEffect } from "react";
 import { useAuthUser } from "../auth";
-import HeaderMenu from "@/components/header-menu";
 SplashScreen.preventAutoHideAsync();
 
 export default function RootNavigation() {
@@ -14,7 +14,12 @@ export default function RootNavigation() {
 
   //Navigerar till rätt sida baserat på autentisering
   return (
-    <Stack screenOptions={{ headerShown: false }}>
+    <Stack
+      screenOptions={{
+        headerShown: false,
+        animation: "slide_from_right",
+      }}
+    >
       {/*Splash screenen körs först*/}
       <Stack.Protected guard={!user}>
         <Stack.Screen name="index" options={{ headerShown: false }} />
