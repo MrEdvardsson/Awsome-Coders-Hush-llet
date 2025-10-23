@@ -1,9 +1,13 @@
+import { db } from "@/firebase-config";
+import { doc, getDoc } from "firebase/firestore";
 import {
   GetHousehold,
   getHouseholdByGeneratedCode,
   getHouseholdByInvitationCode,
+  getprofilesForHousehold,
   joinHousehold,
-  Profile,
+  ProfileDb,
+  UserExtends,
 } from "../data/household-db";
 
 const avatars = ["🦊", "🐷", "🐸", "🐤", "🐙", "🐋", "🦉", "🦄"];
@@ -25,24 +29,40 @@ export async function validateAndGetHousehold(
       invitationCode.toUpperCase(),
       currentUserId
     );
-    if (!household) return { isSuccess: false, errorMessage: "Oiltig kod" };
+    if (!household) return { isSuccess: false, errorMessage: "Ogiltig kod" };
 
-    const existingProfile = household.members.find(
-      (member: any) => member.uid === currentUserId
+    const profiles = await getprofilesForHousehold(household.id);
+
+    if (profiles.length === 0)
+      return {
+        isSuccess: false,
+        errorMessage: "Inga profiler hittades",
+      };
+
+    const existingProfile = profiles.find(
+      (member) => member.uid === currentUserId
     );
 
-    if (existingProfile)
+    if (existingProfile) {
+      if (existingProfile.isPending) {
+        return {
+          isSuccess: false,
+          errorMessage: "Du har redan ansökt till detta hushållet",
+        };
+      }
+
+      if (profiles.length === 8)
+        return {
+          isSuccess: false,
+          errorMessage: "Hushållet är fullt (max 8 medlemmar)",
+        };
+
       return {
         isSuccess: false,
         errorMessage: "Du är redan medlem i detta hushåll",
       };
-
-    if (household.members.length === 8)
-      return {
-        isSuccess: false,
-        errorMessage: "Hushållet är fullt (max 8 medlemmar)",
-      };
-
+    }
+    household.profiles = profiles;
     return { isSuccess: true, houseHold: household };
   } catch (error) {
     //TODO sätta upp felmeddelande hantering.
@@ -56,7 +76,7 @@ export function validateJoinHouseholdInput(
   selectedAvatar: string,
   household: GetHousehold
 ): string | null {
-  const memberNames: string[] = household.members.map((m) => m.profileName);
+  const memberNames = household.profiles?.map((m) => m.profileName);
 
   if (!profileName.trim()) return "Måste ha ett profilnamn";
   if (!selectedAvatar) return "Måste välja en Avatar";
@@ -66,7 +86,9 @@ export function validateJoinHouseholdInput(
 }
 
 export function getAvailableAvatars(houseHold: GetHousehold): string[] {
-  const membersAvatars = houseHold?.members.map((m) => m.selectedAvatar);
+  const membersAvatars =
+    houseHold?.profiles?.map((m) => m.selectedAvatar) ?? [];
+
   const availableAvatars = avatars.filter(
     (avatar) => !membersAvatars.includes(avatar)
   );
@@ -77,7 +99,7 @@ export function getAvailableAvatars(houseHold: GetHousehold): string[] {
 export async function handleJoinHousehold(
   houseHold: GetHousehold,
   userId: string,
-  profile: Profile
+  profile: ProfileDb
 ) {
   try {
     await joinHousehold(houseHold, userId, profile);
@@ -155,17 +177,49 @@ export async function handleCreateHousehold(
   }
 }
 
-export function validateHouseholdMembership(
-  households: GetHousehold[],
-  userUid: string
-): GetHousehold[] {
-  return households.filter((household) => {
-    const userMember = household.members.find(
-      (member) => member.uid === userUid
-    );
+export async function validateHouseholdMembership(
+  userExtend: UserExtends
+): Promise<GetHousehold[]> {
+  const validHouseholds: GetHousehold[] = [];
 
-    return userMember && !userMember.isPending && !userMember.isDeleted;
-  });
+  if (!userExtend.houseHold_ids || userExtend.houseHold_ids.length === 0) {
+    return validHouseholds;
+  }
+
+  for (let i = 0; i < userExtend.houseHold_ids.length; i++) {
+    const householdId = userExtend.houseHold_ids[i];
+    const profileId = userExtend.profile_ids[i];
+
+    const householdRef = doc(db, "households", householdId);
+    const householdSnap = await getDoc(householdRef);
+
+    if (!householdSnap.exists()) continue;
+    const householdData = householdSnap.data();
+
+    const profileRef = doc(
+      db,
+      "households",
+      householdId,
+      "profiles",
+      profileId
+    );
+    const profileSnap = await getDoc(profileRef);
+
+    if (!profileSnap.exists()) continue;
+    const profileData = profileSnap.data() as {
+      isPending: boolean;
+      isDeleted: boolean;
+    };
+
+    if (!profileData.isPending && !profileData.isDeleted) {
+      validHouseholds.push({
+        id: householdId,
+        ...householdData,
+      } as GetHousehold);
+    }
+  }
+
+  return validHouseholds;
 }
 
 export function validateHouseholdMembers(
@@ -173,6 +227,6 @@ export function validateHouseholdMembers(
 ): GetHousehold {
   return {
     ...household,
-    members: household.members.filter((m) => !m.isDeleted),
+    profiles: household.profiles?.filter((m) => !m.isDeleted),
   };
 }

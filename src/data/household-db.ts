@@ -3,12 +3,15 @@ import {
   arrayUnion,
   collection,
   doc,
+  FieldValue,
+  getDoc,
   getDocs,
   onSnapshot,
   query,
   runTransaction,
   serverTimestamp,
   setDoc,
+  Timestamp,
   updateDoc,
   where,
 } from "firebase/firestore";
@@ -26,48 +29,11 @@ export interface Household {
   code: string;
 }
 
-export interface Profile {
-  profileName: string;
-  selectedAvatar: string;
-}
-
-export interface ProfileDb extends Profile {
-  id: string;
-  uid: string;
-  isOwner: boolean;
-  isPending: boolean;
-  isPaused: boolean;
-  householdId: string;
-  pausedStart: Date | null;
-  pausedEnd: Date | null;
-  isDeleted: boolean;
-}
-
 export interface GetHousehold {
   id: string;
   title: string;
   code: string;
-  members: {
-    id: string;
-    profileName: string;
-    isOwner: boolean;
-    selectedAvatar: string;
-    uid: string;
-    isPending: boolean;
-    isPaused: boolean;
-    isDeleted: boolean;
-  }[];
-}
-
-export interface GetMembers {
-  id: string;
-  profileName: string;
-  isOwner: boolean;
-  selectedAvatar: string;
-  uid: string;
-  isPending: boolean;
-  isPaused: boolean;
-  isDeleted: boolean;
+  profiles: ProfileDb[];
 }
 
 export interface UserExtends {
@@ -87,13 +53,30 @@ interface UpdateTitle {
   newTitle: string;
 }
 
+export interface Profile {
+  profileName: string;
+  selectedAvatar: string;
+}
+
+export interface ProfileDb extends Profile {
+  id: string;
+  uid: string;
+  isOwner: boolean;
+  isPending: boolean;
+  isPaused: boolean;
+  householdId: string;
+  pausedStart?: Timestamp | Date | FieldValue | null;
+  pausedEnd?: Timestamp | Date | FieldValue | null;
+  isDeleted: boolean;
+}
+
 export async function AddHousehold(
   userUid: string,
   household: Household,
   profile: Profile
 ) {
-  const profileRef = doc(collection(db, "profiles"));
   const houseRef = doc(collection(db, "households"));
+  const profileRef = doc(collection(db, "households", houseRef.id, "profiles"));
   console.log("Förgenererat ID:", profileRef.id);
 
   const p = {
@@ -104,8 +87,6 @@ export async function AddHousehold(
     isOwner: true,
     isPending: false,
     isPaused: false,
-    household_id: houseRef.id,
-
     isDeleted: false,
   };
 
@@ -113,35 +94,38 @@ export async function AddHousehold(
     id: houseRef.id,
     title: household.title,
     code: household.code,
-    members: [p],
     chores: [],
     createdAt: serverTimestamp(),
   };
 
-  await setDoc(profileRef, p);
   await setDoc(houseRef, householdDoc);
+  await setDoc(profileRef, p);
 
   const userExtendRef = doc(db, "user_extend", userUid);
   await setDoc(
     userExtendRef,
     {
-      user_uid: [userUid],
+      user_uid: userUid,
       profile_ids: arrayUnion(profileRef.id),
-      household_ids: arrayUnion(householdDoc.id),
+      houseHold_ids: arrayUnion(householdDoc.id),
     },
     { merge: true }
   );
-
-  await updateDoc(profileRef, { household_id: householdDoc.id });
 
   console.log("✅ Hushåll skapat med ID:", householdDoc.id);
 }
 
 export async function GetHouseholds(userUid: string): Promise<GetHousehold[]> {
-  const snapshot = await getDocs(collection(db, "households"));
-  const households = snapshot.docs
-    .map((doc) => ({ id: doc.id, ...doc.data() } as GetHousehold))
-    .filter((h) => h.members.some((m) => m.uid === userUid));
+  const q = query(
+    collection(db, "user_extend"),
+    where("user_uid", "==", userUid)
+  );
+
+  const snapshot = await getDocs(q);
+
+  const households = snapshot.docs.map(
+    (doc) => ({ id: doc.id, ...doc.data() } as GetHousehold)
+  );
 
   return households;
 }
@@ -150,12 +134,18 @@ export function ListenToHouseholds(
   userUid: string,
   callback: (households: GetHousehold[]) => void
 ) {
-  const unsubscribe = onSnapshot(collection(db, "households"), (snapshot) => {
-    const allHouseholds = snapshot.docs
-      .map((doc) => ({ id: doc.id, ...doc.data() } as GetHousehold))
-      .filter((h) => h.members.some((m) => m.uid === userUid));
+  const userExtendRef = doc(db, "user_extend", userUid);
 
-    const validHouseholds = validateHouseholdMembership(allHouseholds, userUid);
+  const unsubscribe = onSnapshot(userExtendRef, async (snapshot) => {
+    if (!snapshot.exists()) {
+      console.warn("⚠️ No user_extend found for user:", userUid);
+      callback([]);
+      return;
+    }
+
+    const userExtend = snapshot.data() as UserExtends;
+
+    const validHouseholds = await validateHouseholdMembership(userExtend);
 
     callback(validHouseholds);
   });
@@ -167,19 +157,65 @@ export function ListenToSingleHousehold(
   householdId: string,
   callback: (household: GetHousehold) => void
 ) {
-  const ref = doc(db, "households", householdId);
+  const householdRef = doc(db, "households", householdId);
+  const profilesRef = collection(db, "households", householdId, "profiles");
 
-  const unsubscribe = onSnapshot(ref, (snapshot) => {
+  // Listen to both household document and profiles subcollection
+  const unsubscribeHousehold = onSnapshot(householdRef, async (snapshot) => {
     if (snapshot.exists()) {
       const household = { id: snapshot.id, ...snapshot.data() } as GetHousehold;
 
+      const profileSnap = await getDocs(profilesRef);
+      const profiles = profileSnap.docs.map((d) => ({
+        id: d.id,
+        householdId: householdId,
+        ...d.data(),
+      })) as ProfileDb[];
+
       const validateHousehold = validateHouseholdMembers(household);
 
-      callback(validateHousehold);
+      const fullData = {
+        ...validateHousehold,
+        profiles,
+      } as GetHousehold;
+
+      callback(fullData);
     }
   });
 
-  return unsubscribe;
+  // Also listen to changes in profiles subcollection
+  const unsubscribeProfiles = onSnapshot(profilesRef, async () => {
+    const householdSnap = await getDoc(householdRef);
+
+    if (householdSnap.exists()) {
+      const household = {
+        id: householdSnap.id,
+        ...householdSnap.data(),
+      } as GetHousehold;
+
+      const profileSnap = await getDocs(profilesRef);
+      const profiles = profileSnap.docs.map((d) => ({
+        id: d.id,
+        householdId: householdId,
+        ...d.data(),
+      })) as ProfileDb[];
+
+      const validateHousehold = validateHouseholdMembers(household);
+
+      const fullData = {
+        ...validateHousehold,
+        profiles,
+      } as GetHousehold;
+
+      callback(fullData);
+    }
+  });
+
+  // Return a function that unsubscribes from both listeners
+  return () => {
+    unsubscribeHousehold();
+    unsubscribeProfiles();
+  };
 }
 
 export async function UpdateCode(prop: UpdateCode): Promise<void> {
@@ -217,16 +253,26 @@ export async function getHouseholdByInvitationCode(
   return houseHold;
 }
 
+export async function getprofilesForHousehold(
+  houseId: string
+): Promise<ProfileDb[]> {
+  const profileRef = collection(db, HOUSEHOLDS, houseId, PROFILES);
+  const snapshot = await getDocs(profileRef);
+  if (snapshot.empty) return [];
+  const profiles = snapshot.docs.map(
+    (doc) => ({ id: doc.id, ...doc.data() } as ProfileDb)
+  );
+  return profiles;
+}
+
 export async function joinHousehold(
   houseHold: GetHousehold,
   userId: string,
-  profile: Profile
+  profile: ProfileDb
 ) {
   const houseHoldRef = doc(db, HOUSEHOLDS, houseHold.id);
-  const profileRef = doc(collection(db, PROFILES));
+  const profileRef = doc(collection(db, HOUSEHOLDS, houseHold.id, PROFILES));
   const userExtendRef = doc(db, USEREXTENDS, userId);
-
-  // Detta är korrekt data.
 
   const profileData: ProfileDb = {
     id: profileRef.id,
@@ -242,29 +288,15 @@ export async function joinHousehold(
     isDeleted: false,
   };
 
-  // const profileData = {
-  //   id: profileRef.id,
-  //   uid: userId,
-  //   profileName: profile.profileName,
-  //   selectedAvatar: profile.selectedAvatar,
-  //   isOwner: true,
-  //   household_id: houseHold.id,
-  //   isDeleted: false,
-  // };
-
   await runTransaction(db, async (transaction) => {
     transaction.set(profileRef, profileData);
-
-    transaction.update(houseHoldRef, {
-      members: arrayUnion(profileData),
-    });
 
     transaction.set(
       userExtendRef,
       {
         user_uid: userId,
         profile_ids: arrayUnion(profileRef.id),
-        household_ids: arrayUnion(houseHoldRef.id),
+        houseHold_ids: arrayUnion(houseHold.id),
       },
       { merge: true }
     );
@@ -289,20 +321,65 @@ export async function pendingMember(
   profileId: string,
   shouldDelete: boolean
 ) {
-  const houseHoldRef = doc(db, "households", householdId);
+  const profileRef = doc(db, "households", householdId, "profiles", profileId);
 
-  await runTransaction(db, async (transaction) => {
-    const houseHoldSnap = await transaction.get(houseHoldRef);
+  const profileSnap = await getDoc(profileRef);
+  if (!profileSnap.exists()) {
+    throw new Error("Profile not found");
+  }
 
-    const householdData = houseHoldSnap.data() as GetHousehold;
-    const updatedMembers = householdData.members.map((member: GetMembers) => {
-      if (member.id !== profileId) return member;
-      if (shouldDelete) return { ...member, isDeleted: true, isPending: false };
-      else {
-        return { ...member, isPending: false };
-      }
-    });
+  const updates = shouldDelete
+    ? { isDeleted: true, isPending: false }
+    : { isPending: false };
 
-    transaction.update(houseHoldRef, { members: updatedMembers });
-  });
+  await updateDoc(profileRef, updates);
+}
+
+export async function updateProfileInHousehold(profile: ProfileDb) {
+  try {
+    if (!profile.householdId || !profile.id) {
+      throw new Error(
+        `Missing required fields: householdId=${profile.householdId}, id=${profile.id}`
+      );
+    }
+
+    const profileRef = doc(
+      db,
+      "households",
+      profile.householdId,
+      "profiles",
+      profile.id
+    );
+    const profileSnap = await getDoc(profileRef);
+
+    if (!profileSnap.exists()) {
+      throw new Error("Profile not found");
+    }
+
+    const currentProfile = profileSnap.data() as ProfileDb;
+    const wasPaused = currentProfile.isPaused;
+    const willBePaused = profile.isPaused;
+
+    const updated: Partial<ProfileDb> = {
+      isOwner: profile.isOwner,
+      isDeleted: profile.isDeleted,
+      isPaused: willBePaused,
+    };
+
+    if (!wasPaused && willBePaused) {
+      updated.pausedStart = serverTimestamp();
+    }
+
+    if (wasPaused && !willBePaused) {
+      updated.pausedEnd = serverTimestamp();
+    }
+
+    await updateDoc(profileRef, updated);
+
+    console.log("✅ Profile updated in subcollection!");
+    return true;
+  } catch (error) {
+    console.error("❌ Error updating profile:", error);
+    throw error;
+  }
 }

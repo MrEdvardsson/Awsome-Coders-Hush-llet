@@ -1,12 +1,17 @@
 import { useAuthUser } from "@/auth";
 import { useAppTheme } from "@/constants/app-theme";
-import { GetHousehold, ListenToHouseholds } from "@/src/data/household-db";
+import {
+  GetHousehold,
+  ListenToHouseholds,
+} from "@/src/data/household-db";
+import { getStatisticsData } from "@/src/services/statisticsService";
 // import { getAuth } from "firebase/auth";
 import { Ionicons } from "@expo/vector-icons";
 import { router } from "expo-router";
 import React, { useEffect, useState } from "react";
 import { FlatList, StyleSheet, View } from "react-native";
 import { Card, FAB, IconButton, Text } from "react-native-paper";
+import { Household } from "./info-household";
 
 export default function Home() {
   const theme = useAppTheme();
@@ -26,7 +31,7 @@ export default function Home() {
     return () => unsubscribe();
   }, []);
 
-  const handleInfoButton = (household: any) => {
+  const handleInfoButton = (household: Household) => {
     router.push({
       pathname: "/screens/home/info-household",
       params: { data: JSON.stringify(household) },

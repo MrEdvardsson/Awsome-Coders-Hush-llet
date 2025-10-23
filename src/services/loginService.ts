@@ -23,6 +23,8 @@ export function validateLogin(email: string, password: string): string | null {
 
 export function getLoginError(errorCode: string): string {
   switch (errorCode) {
+    case "auth/invalid-credential":
+      return "Felaktig email eller lösenord.";
     case "auth/user-not-found":
       return "Ingen användare med denna email hittades.";
     case "auth/wrong-password":

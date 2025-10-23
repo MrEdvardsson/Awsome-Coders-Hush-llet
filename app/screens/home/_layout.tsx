@@ -34,6 +34,15 @@ export default function HomeLayout() {
         name="info-household"
         options={{ title: "Hushålls Info" }}
       />
+      <Stack.Screen
+        name="profile-modal"
+        options={{
+          presentation: "transparentModal",
+          title: "Profilinfo",
+          animation: "default",
+          headerShown: false,
+        }}
+      />
     </Stack>
   );
 }
