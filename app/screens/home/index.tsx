@@ -1,14 +1,14 @@
 import { useAuthUser } from "@/auth";
 import { useAppTheme } from "@/constants/app-theme";
-import {
-  GetHousehold,
-  ListenToHouseholds,
-} from "@/src/data/household-db";
-import { getStatisticsData } from "@/src/services/statisticsService";
+import { UserExtends } from "@/src/data/household-db";
 // import { getAuth } from "firebase/auth";
+import { db } from "@/firebase-config";
+import { validateHouseholdMembership } from "@/src/services/householdService";
 import { Ionicons } from "@expo/vector-icons";
+import { useQuery } from "@tanstack/react-query";
 import { router } from "expo-router";
-import React, { useEffect, useState } from "react";
+import { doc, getDoc } from "firebase/firestore";
+import React, { useState } from "react";
 import { FlatList, StyleSheet, View } from "react-native";
 import { Card, FAB, IconButton, Text } from "react-native-paper";
 import { Household } from "./info-household";
@@ -16,20 +16,27 @@ import { Household } from "./info-household";
 export default function Home() {
   const theme = useAppTheme();
   const { data: user } = useAuthUser();
-  const [households, setHouseholds] = useState<GetHousehold[]>([]);
-  const [loading, setIsLoading] = useState(true);
   const [fabOpen, setFabOpen] = useState(false);
 
-  useEffect(() => {
-    if (!user?.uid) return;
-
-    const unsubscribe = ListenToHouseholds(user.uid, (householdsFromDb) => {
-      setHouseholds(householdsFromDb);
-      setIsLoading(false);
-    });
-
-    return () => unsubscribe();
-  }, []);
+  const {
+    data: households,
+    isLoading,
+    isError,
+    error,
+  } = useQuery({
+    queryKey: ["user_extend", user?.uid],
+    enabled: !!user?.uid,
+    queryFn: async () => {
+      const ref = doc(db, "user_extend", user!.uid);
+      const snap = await getDoc(ref);
+      if (!snap.exists()) throw new Error("User extend not found");
+      const data = snap.data() as UserExtends;
+      return await validateHouseholdMembership(data);
+    },
+    refetchOnWindowFocus: true,
+    refetchOnReconnect: true,
+    staleTime: 1000 * 60 * 2,
+  });
 
   const handleInfoButton = (household: Household) => {
     router.push({
@@ -38,9 +45,10 @@ export default function Home() {
     });
   };
 
-  if (loading) return <Text>Laddar...</Text>;
-  if (households.length === 0) {
-  }
+  if (isLoading) return <Text>Laddar...</Text>;
+  if (isError) return <Text>Fel: {(error as Error).message}</Text>;
+  if (!households || households.length === 0)
+    return <Text>Inga hushåll hittades</Text>;
 
   return (
     <View
