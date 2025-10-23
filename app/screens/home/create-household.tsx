@@ -109,6 +109,7 @@ export default function CreateHousehold() {
             style={{ backgroundColor: theme.colors.surface, marginTop: 12 }}
             outlineColor={theme.colors.outline}
             activeOutlineColor={theme.colors.primary}
+            disabled={code === "" || code.length === 10}
           />
           <Button
             mode="contained"

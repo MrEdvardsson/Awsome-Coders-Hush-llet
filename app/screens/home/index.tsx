@@ -1,6 +1,10 @@
 import { useAuthUser } from "@/auth";
 import { useAppTheme } from "@/constants/app-theme";
-import { GetHousehold, ListenToHouseholds } from "@/src/data/household-db";
+import {
+  GetHousehold,
+  ListenToHouseholds,
+} from "@/src/data/household-db";
+import { getStatisticsData } from "@/src/services/statisticsService";
 // import { getAuth } from "firebase/auth";
 import { Ionicons } from "@expo/vector-icons";
 import { router } from "expo-router";
