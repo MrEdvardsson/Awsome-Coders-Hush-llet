@@ -1,4 +1,4 @@
-import { deleteChore, markChoreCompleted } from "@/src/data/chores";
+import { deleteChore, markChoreCompleted, updateChore } from "@/src/data/chores";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { Alert } from "react-native";
 
@@ -85,14 +85,32 @@ export function useChoresActions(
     },
   });
 
+  const archiveMutation = useMutation({
+    mutationFn: async (choreId: string) => {
+      await updateChore(householdId, choreId, { isArchived: true });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["chores", householdId] });
+      Alert.alert("Arkiverad", "Sysslan har arkiverats.");
+    },
+    onError: (error) => {
+      console.error(error);
+      Alert.alert("Fel", "Kunde inte arkivera sysslan.");
+    },
+  });
+
   const handleDelete = (choreId: string, choreTitle: string) => {
     Alert.alert(
       "Ta bort syssla",
-      `Är du säker på att du vill ta bort "${choreTitle}"?`,
+      `Vill du inte arkivera "${choreTitle}" istället?\n\n⚠️ Om du tar bort sysslan försvinner all statistik permanent. Arkivering behåller historiken.`,
       [
         {
           text: "Avbryt",
           style: "cancel",
+        },
+        {
+          text: "Arkivera",
+          onPress: () => archiveMutation.mutate(choreId),
         },
         {
           text: "Ta bort",
@@ -106,6 +124,7 @@ export function useChoresActions(
   return {
     completeMutation,
     deleteMutation,
+    archiveMutation,
     handleDelete,
   };
 }

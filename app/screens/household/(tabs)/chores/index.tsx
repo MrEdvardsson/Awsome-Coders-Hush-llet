@@ -89,7 +89,7 @@ export default function HouseholdPage() {
         {!isLoading && !error && (
           <>
             <FlatList
-              data={chores}
+              data={chores?.filter((chore) => !chore.isArchived)}
               keyExtractor={(item) => item.id!}
               contentContainerStyle={styles.listContent}
               ListEmptyComponent={
