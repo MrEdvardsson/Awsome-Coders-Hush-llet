@@ -47,7 +47,9 @@ export default function Home() {
 
   if (isLoading) {
     return (
-      <View style={[styles.container, { backgroundColor: theme.colors.background }]}>
+      <View
+        style={[styles.container, { backgroundColor: theme.colors.background }]}
+      >
         <View style={styles.emptyContainer}>
           <Text>Laddar...</Text>
         </View>
@@ -57,9 +59,13 @@ export default function Home() {
 
   if (isError) {
     return (
-      <View style={[styles.container, { backgroundColor: theme.colors.background }]}>
+      <View
+        style={[styles.container, { backgroundColor: theme.colors.background }]}
+      >
         <View style={styles.emptyContainer}>
-          <Text style={{ color: theme.colors.error }}>Fel: {(error as Error).message}</Text>
+          <Text style={{ color: theme.colors.error }}>
+            Fel: {(error as Error).message}
+          </Text>
         </View>
       </View>
     );
