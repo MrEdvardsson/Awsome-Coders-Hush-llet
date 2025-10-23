@@ -6,7 +6,6 @@ import {
   FieldValue,
   getDoc,
   getDocs,
-  onSnapshot,
   query,
   runTransaction,
   serverTimestamp,
@@ -15,10 +14,6 @@ import {
   updateDoc,
   where,
 } from "firebase/firestore";
-import {
-  validateHouseholdMembers,
-  validateHouseholdMembership,
-} from "../services/householdService";
 
 const HOUSEHOLDS = "households";
 const PROFILES = "profiles";
@@ -130,93 +125,92 @@ export async function GetHouseholds(userUid: string): Promise<GetHousehold[]> {
   return households;
 }
 
-export function ListenToHouseholds(
-  userUid: string,
-  callback: (households: GetHousehold[]) => void
-) {
-  const userExtendRef = doc(db, "user_extend", userUid);
+// export function ListenToHouseholds(
+//   userUid: string,
+//   callback: (households: GetHousehold[]) => void
+// ) {
+//   const userExtendRef = doc(db, "user_extend", userUid);
 
-  const unsubscribe = onSnapshot(userExtendRef, async (snapshot) => {
-    if (!snapshot.exists()) {
-      console.warn("⚠️ No user_extend found for user:", userUid);
-      callback([]);
-      return;
-    }
+//   const unsubscribe = onSnapshot(userExtendRef, async (snapshot) => {
+//     if (!snapshot.exists()) {
+//       console.warn("⚠️ No user_extend found for user:", userUid);
+//       callback([]);
+//       return;
+//     }
 
-    const userExtend = snapshot.data() as UserExtends;
+//     const userExtend = snapshot.data() as UserExtends;
 
-    const validHouseholds = await validateHouseholdMembership(userExtend);
+//     const validHouseholds = await validateHouseholdMembership(userExtend);
 
-    callback(validHouseholds);
-  });
+//     callback(validHouseholds);
+//   });
 
-  return unsubscribe;
-}
+//   return unsubscribe;
+// }
 
-export function ListenToSingleHousehold(
-  householdId: string,
-  callback: (household: GetHousehold) => void
-) {
-  const householdRef = doc(db, "households", householdId);
-  const profilesRef = collection(db, "households", householdId, "profiles");
+// export function ListenToSingleHousehold(
+//   householdId: string,
+//   callback: (household: GetHousehold) => void
+// ) {
+//   const householdRef = doc(db, "households", householdId);
+//   const profilesRef = collection(db, "households", householdId, "profiles");
 
-  // Listen to both household document and profiles subcollection
-  const unsubscribeHousehold = onSnapshot(householdRef, async (snapshot) => {
-    if (snapshot.exists()) {
-      const household = { id: snapshot.id, ...snapshot.data() } as GetHousehold;
+//   const unsubscribeHousehold = onSnapshot(householdRef, async (snapshot) => {
+//     if (snapshot.exists()) {
+//       const household = { id: snapshot.id, ...snapshot.data() } as GetHousehold;
 
-      const profileSnap = await getDocs(profilesRef);
-      const profiles = profileSnap.docs.map((d) => ({
-        id: d.id,
-        householdId: householdId,
-        ...d.data(),
-      })) as ProfileDb[];
+//       const profileSnap = await getDocs(profilesRef);
+//       const profiles = profileSnap.docs.map((d) => ({
+//         id: d.id,
+//         householdId: householdId,
+//         ...d.data(),
+//       })) as ProfileDb[];
 
-      const validateHousehold = validateHouseholdMembers(household);
+//       const validateHousehold = validateHouseholdMembers(household);
 
-      const fullData = {
-        ...validateHousehold,
-        profiles,
-      } as GetHousehold;
+//       const fullData = {
+//         ...validateHousehold,
+//         profiles,
+//       } as GetHousehold;
 
-      callback(fullData);
-    }
-  });
+//       callback(fullData);
+//     }
+//   });
 
-  // Also listen to changes in profiles subcollection
-  const unsubscribeProfiles = onSnapshot(profilesRef, async () => {
-    const householdSnap = await getDoc(householdRef);
+// Also listen to changes in profiles subcollection
+// const unsubscribeProfiles = onSnapshot(profilesRef, async () => {
+//     const householdSnap = await getDoc(householdRef);
 
-    if (householdSnap.exists()) {
-      const household = {
-        id: householdSnap.id,
-        ...householdSnap.data(),
-      } as GetHousehold;
+//     if (householdSnap.exists()) {
+//       const household = {
+//         id: householdSnap.id,
+//         ...householdSnap.data(),
+//       } as GetHousehold;
 
-      const profileSnap = await getDocs(profilesRef);
-      const profiles = profileSnap.docs.map((d) => ({
-        id: d.id,
-        householdId: householdId,
-        ...d.data(),
-      })) as ProfileDb[];
+//       const profileSnap = await getDocs(profilesRef);
+//       const profiles = profileSnap.docs.map((d) => ({
+//         id: d.id,
+//         householdId: householdId,
+//         ...d.data(),
+//       })) as ProfileDb[];
 
-      const validateHousehold = validateHouseholdMembers(household);
+//       const validateHousehold = validateHouseholdMembers(household);
 
-      const fullData = {
-        ...validateHousehold,
-        profiles,
-      } as GetHousehold;
+//       const fullData = {
+//         ...validateHousehold,
+//         profiles,
+//       } as GetHousehold;
 
-      callback(fullData);
-    }
-  });
+//       callback(fullData);
+//     }
+//   });
 
-  // Return a function that unsubscribes from both listeners
-  return () => {
-    unsubscribeHousehold();
-    unsubscribeProfiles();
-  };
-}
+//   // Return a function that unsubscribes from both listeners
+//   return () => {
+//     unsubscribeHousehold();
+//     unsubscribeProfiles();
+//   };
+// }
 
 export async function UpdateCode(prop: UpdateCode): Promise<void> {
   const q = query(collection(db, "households"), where("code", "==", prop.code));
