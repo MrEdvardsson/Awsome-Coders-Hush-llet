@@ -110,7 +110,13 @@ export default function Home() {
         }
         renderItem={({ item }) => (
           <Card
-            style={styles.householdCard}
+            style={[
+              styles.householdCard,
+              item.userProfile.isPaused && {
+                opacity: 0.5,
+                backgroundColor: "#00000010",
+              },
+            ]}
             mode="elevated"
             elevation={2}
             onPress={() =>
@@ -120,6 +126,19 @@ export default function Home() {
               })
             }
           >
+            {item.userProfile?.isPaused && (
+              <Card.Content>
+                <Text
+                  style={{
+                    color: "#fffefeff",
+                    fontStyle: "italic",
+                    marginTop: 4,
+                  }}
+                >
+                  Pausad
+                </Text>
+              </Card.Content>
+            )}
             <Card.Title
               title={item.title}
               titleVariant="titleLarge"

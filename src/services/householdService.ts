@@ -215,14 +215,13 @@ export async function validateHouseholdMembership(
       isPaused: boolean;
     };
 
-    if (
-      !profileData.isPending &&
-      !profileData.isDeleted &&
-      !profileData.isPaused
-    ) {
+    if (!profileData.isPending && !profileData.isDeleted) {
       validHouseholds.push({
         id: householdId,
         ...householdData,
+        userProfile: {
+          isPaused: profileData.isPaused,
+        },
       } as GetHousehold);
     }
   }

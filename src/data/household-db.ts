@@ -29,6 +29,9 @@ export interface GetHousehold {
   title: string;
   code: string;
   profiles: ProfileDb[];
+  userProfile: {
+    isPaused: boolean;
+  };
 }
 
 export interface UserExtends {
@@ -392,9 +395,9 @@ export async function getUserProfileForHousehold(
   const profilesRef = collection(db, "households", householdId, "profiles");
   const q = query(profilesRef, where("uid", "==", userId));
   const snapshot = await getDocs(q);
-  
+
   if (snapshot.empty) return null;
-  
+
   const profileDoc = snapshot.docs[0];
   return { id: profileDoc.id, ...profileDoc.data() } as ProfileDb;
 }
