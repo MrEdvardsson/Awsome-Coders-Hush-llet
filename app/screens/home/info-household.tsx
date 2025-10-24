@@ -203,7 +203,6 @@ export default function InfoHousehold() {
           </View>
         </Surface>
 
-        {/* Titel-sektion */}
         {isOwner && (
           <Surface style={styles.section} elevation={1}>
             <View style={styles.sectionHeader}>
@@ -273,7 +272,7 @@ export default function InfoHousehold() {
                       <Text style={styles.avatar}>{item.selectedAvatar}</Text>
                       <Text variant="titleMedium">{item.profileName}</Text>
                       {item.isPaused && (
-                        <Text variant="headlineMedium">Pausad!</Text>
+                        <Text variant="titleMedium">Pausad!</Text>
                       )}
                       {item.isOwner && (
                         <Chip
