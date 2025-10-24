@@ -313,23 +313,35 @@ export async function getHouseholdByGeneratedCode(
   return houseHold;
 }
 
-export async function pendingMember(
-  householdId: string,
-  profileId: string,
-  shouldDelete: boolean
-) {
-  const profileRef = doc(db, "households", householdId, "profiles", profileId);
+export async function pendingMember({
+  householdId,
+  Id,
+  isDeleted,
+}: {
+  householdId: string;
+  Id: string;
+  isDeleted: boolean;
+  isPending: boolean;
+}) {
+  const profileRef = doc(db, "households", householdId, "profiles", Id);
 
   const profileSnap = await getDoc(profileRef);
   if (!profileSnap.exists()) {
     throw new Error("Profile not found");
   }
 
-  const updates = shouldDelete
+  const updates = isDeleted
     ? { isDeleted: true, isPending: false }
     : { isPending: false };
 
   await updateDoc(profileRef, updates);
+
+  return {
+    id: Id,
+    householdId,
+    ...profileSnap.data(),
+    ...updates,
+  };
 }
 
 export async function updateProfileInHousehold(profile: ProfileDb) {
