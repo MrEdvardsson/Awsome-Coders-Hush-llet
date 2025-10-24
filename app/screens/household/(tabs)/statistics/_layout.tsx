@@ -6,8 +6,8 @@ export default function ChoresLayout() {
   return (
     <Stack
       screenOptions={{
-        headerStyle: { backgroundColor: theme.colors.surface },
-        headerTintColor: theme.colors.onSurface,
+        headerStyle: { backgroundColor: theme.colors.background },
+        headerTintColor: theme.colors.onBackground,
       }}
     >
       <Stack.Screen

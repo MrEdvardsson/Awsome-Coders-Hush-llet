@@ -7,10 +7,10 @@ export default function HomeLayout() {
   return (
     <Stack
       screenOptions={{
-        headerStyle: { backgroundColor: theme.colors.surface },
-        headerTintColor: theme.colors.onSurface,
+        headerStyle: { backgroundColor: theme.colors.background },
+        headerTintColor: theme.colors.onBackground,
         headerTitleStyle: {
-          color: theme.colors.onSurface,
+          color: theme.colors.onBackground,
         },
         animation: "slide_from_right",
         headerRight: () => <HeaderMenu />,

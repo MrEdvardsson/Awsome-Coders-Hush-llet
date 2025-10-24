@@ -10,9 +10,15 @@ export default function HouseholdLayout() {
     <Tabs
       screenOptions={{
         headerTitleAlign: "center",
-        tabBarActiveTintColor: theme.colors.onPrimary,
-        tabBarStyle: { backgroundColor: theme.colors.primary },
-        tabBarLabelStyle: { fontSize: 14, fontWeight: "bold" },
+        tabBarActiveTintColor: theme.colors.secondary,
+        tabBarStyle: {
+          backgroundColor: theme.colors.background,
+          borderTopWidth: 0,
+        },
+        tabBarLabelStyle: {
+          fontSize: 14,
+          fontWeight: "bold",
+        },
         headerShown: false,
       }}
     >

@@ -176,7 +176,7 @@ export default function ChooseProfile({
       <Success
         title={"Nästan där!"}
         onButtonPress={() => {
-          router.replace("/screens/home");
+          router.back();
         }}
         buttonText="Gå tillbaka till dina hushåll"
         message={`Du har begärt medlemskap i ${houseHould.title}. Vänta på godkännande från hushållets administratör.`}

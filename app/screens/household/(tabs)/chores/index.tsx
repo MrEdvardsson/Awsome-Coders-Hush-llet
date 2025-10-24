@@ -11,7 +11,7 @@ import {
   useLocalSearchParams,
   useNavigation,
 } from "expo-router";
-import React, { useCallback } from "react";
+import React, { useCallback, useRef } from "react";
 import { FlatList, StyleSheet, View } from "react-native";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { SwipeableMethods } from "react-native-gesture-handler/ReanimatedSwipeable";
@@ -22,7 +22,7 @@ export default function HouseholdPage() {
   const nav = useNavigation();
   const rootStack = nav.getParent()?.getParent();
   const { data: user } = useAuthUser();
-  const swipeableRefs = React.useRef<Map<string, SwipeableMethods>>(new Map());
+  const swipeableRefs = useRef<Map<string, SwipeableMethods>>(new Map());
 
   const { householdId } = useLocalSearchParams<{ householdId: string }>();
 
@@ -50,7 +50,11 @@ export default function HouseholdPage() {
 
   useFocusEffect(
     useCallback(() => {
-      rootStack?.setOptions({ headerShown: true });
+      rootStack?.setOptions({
+        headerShown: true,
+        headerStyle: { backgroundColor: theme.colors.background },
+        headerTintColor: theme.colors.onBackground,
+      });
       refetch();
       return () => rootStack?.setOptions({ headerShown: false });
     }, [rootStack, refetch])
