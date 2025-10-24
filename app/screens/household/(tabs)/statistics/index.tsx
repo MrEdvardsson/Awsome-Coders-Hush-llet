@@ -1,33 +1,40 @@
-import {
-  View,
-  StyleSheet,
-  FlatList,
-  Dimensions,
-  TouchableOpacity,
-} from "react-native";
-import { Text, Card, ActivityIndicator } from "react-native-paper";
-import { useAppTheme } from "@/constants/app-theme";
-import { SafeAreaView } from "react-native-safe-area-context";
 import PieChartHouseHold from "@/components/statistics/piechart";
-import { useQuery } from "@tanstack/react-query";
-import { getStatisticsData } from "@/src/services/statisticsService";
+import { useAppTheme } from "@/constants/app-theme";
+import {
+  getStatisticsData,
+  SelectPeriod,
+} from "@/src/services/statisticsService";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
+import { useQuery } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
+import {
+  Dimensions,
+  FlatList,
+  StyleSheet,
+  TouchableOpacity,
+  View,
+} from "react-native";
+import { ActivityIndicator, Card, Text } from "react-native-paper";
+import { SafeAreaView } from "react-native-safe-area-context";
 
-const numOfColumns = 2;
 const gap = 12;
 const { width } = Dimensions.get("window");
 
 export default function Statistics() {
   const theme = useAppTheme();
-  const query = useQuery({ queryKey: ["chores"], queryFn: getStatisticsData });
+  const defaultPeriod: SelectPeriod = { chosenPeriod: "Denna veckan" };
+  const [selectPeriod, setSelectPeriod] = useState<SelectPeriod>(defaultPeriod);
+
+  const query = useQuery({
+    queryKey: ["statistics", selectPeriod],
+    queryFn: () => getStatisticsData(selectPeriod),
+  });
   const [numOfColumns, setNumOfColumns] = useState<number>(0);
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [cardWidth, setCardWidth] = useState<number>(0);
 
-  // useEffect(() => {
-  //   setIsLoading(true);
-  // }, []);
+  const showLeft = selectPeriod.chosenPeriod !== "Föregående månad";
+  const showRight = selectPeriod.chosenPeriod !== "Denna veckan";
 
   useEffect(() => {
     if (isLoading && query.isSuccess) {
@@ -37,7 +44,29 @@ export default function Statistics() {
       setCardWidth(cardWidth);
       setIsLoading(false);
     }
-  }, [isLoading, query.isSuccess]);
+  }, [isLoading, query.isSuccess, query.data]);
+
+  function handleLeftArrow() {
+    if (selectPeriod.chosenPeriod === "Denna veckan") {
+      setSelectPeriod({ chosenPeriod: "Föregående veckan" });
+      return;
+    }
+    if (selectPeriod.chosenPeriod === "Föregående veckan") {
+      setSelectPeriod({ chosenPeriod: "Föregående månad" });
+      return;
+    }
+  }
+
+  function handlerightArrow() {
+    if (selectPeriod.chosenPeriod === "Föregående månad") {
+      setSelectPeriod({ chosenPeriod: "Föregående veckan" });
+      return;
+    }
+    if (selectPeriod.chosenPeriod === "Föregående veckan") {
+      setSelectPeriod({ chosenPeriod: "Denna veckan" });
+      return;
+    }
+  }
 
   if (query.isLoading || numOfColumns === 0 || isLoading || cardWidth === 0) {
     return (
@@ -48,7 +77,7 @@ export default function Statistics() {
           justifyContent: "center",
         }}
       >
-        <ActivityIndicator animating={true} />
+        <ActivityIndicator animating={true} size={"large"} />
       </View>
     );
   }
@@ -66,30 +95,35 @@ export default function Statistics() {
             paddingTop: 10,
           }}
         >
-          <TouchableOpacity
-            onPress={() => alert("Implementation kommer snart")}
-          >
-            <MaterialCommunityIcons
-              style={{ color: theme.colors.onSurface }}
-              name="arrow-left"
-              size={24}
-            />
-          </TouchableOpacity>
+          {showLeft ? (
+            <TouchableOpacity onPress={handleLeftArrow}>
+              <MaterialCommunityIcons
+                style={{ color: theme.colors.onSurface }}
+                name="arrow-left"
+                size={24}
+              />
+            </TouchableOpacity>
+          ) : (
+            <View style={{ paddingRight: 22 }}></View>
+          )}
           <Text
             variant="titleSmall"
             style={{ color: theme.colors.onBackground }}
           >
-            Denna veckan
+            {selectPeriod.chosenPeriod}
           </Text>
-          <TouchableOpacity
-            onPress={() => alert("Implementation kommer snart")}
-          >
-            <MaterialCommunityIcons
-              style={{ color: theme.colors.onSurface }}
-              name="arrow-right"
-              size={24}
-            />
-          </TouchableOpacity>
+
+          {showRight ? (
+            <TouchableOpacity onPress={handlerightArrow}>
+              <MaterialCommunityIcons
+                style={{ color: theme.colors.onSurface }}
+                name="arrow-right"
+                size={24}
+              />
+            </TouchableOpacity>
+          ) : (
+            <View style={{ paddingLeft: 22 }}></View>
+          )}
         </View>
         <View style={{ alignSelf: "center" }}>
           <FlatList
@@ -138,6 +172,8 @@ export default function Statistics() {
                 </Card.Content>
               </Card>
             )}
+            columnWrapperStyle={{ gap: 12 }}
+            showsVerticalScrollIndicator={false}
           />
         </View>
       </SafeAreaView>
