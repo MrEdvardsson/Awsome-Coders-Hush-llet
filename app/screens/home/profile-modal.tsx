@@ -1,3 +1,4 @@
+import { useAuthUser } from "@/auth";
 import { useAppTheme } from "@/constants/app-theme";
 import { ProfileDb, updateProfileInHousehold } from "@/src/data/household-db";
 import { Ionicons } from "@expo/vector-icons";
@@ -15,6 +16,7 @@ import { Card, Switch, Text } from "react-native-paper";
 
 export default function ProfileModal() {
   const theme = useAppTheme();
+  const { data: user } = useAuthUser();
   const queryClient = useQueryClient();
   const router = useRouter();
   const { data } = useLocalSearchParams();
@@ -88,18 +90,22 @@ export default function ProfileModal() {
                     {member.selectedAvatar}
                   </Text>
                 )}
-                right={() => (
-                  <TouchableOpacity
-                    onPress={handleDeleteButton}
-                    style={{ marginRight: 12 }}
-                  >
-                    <Ionicons
-                      name="trash-outline"
-                      size={28}
-                      color={theme.colors.error}
-                    />
-                  </TouchableOpacity>
-                )}
+                right={
+                  user?.uid !== member.uid
+                    ? () => (
+                        <TouchableOpacity
+                          onPress={handleDeleteButton}
+                          style={{ marginRight: 12 }}
+                        >
+                          <Ionicons
+                            name="trash-outline"
+                            size={28}
+                            color={theme.colors.error}
+                          />
+                        </TouchableOpacity>
+                      )
+                    : undefined
+                }
               />
             </Card>
             <Card style={style.cardStyle}>
