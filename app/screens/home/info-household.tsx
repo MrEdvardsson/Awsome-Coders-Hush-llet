@@ -333,7 +333,7 @@ export default function InfoHousehold() {
                         </Chip>
                       )}
                     </View>
-                    {isOwner && (
+                    {isOwner && user?.uid !== item.uid ? (
                       <View style={styles.actionButtons}>
                         <IconButton
                           icon="cog-outline"
@@ -341,7 +341,7 @@ export default function InfoHousehold() {
                           onPress={() => handleProfileSettings(item)}
                         />
                       </View>
-                    )}
+                    ) : undefined}
                   </View>
                 </View>
               ))}

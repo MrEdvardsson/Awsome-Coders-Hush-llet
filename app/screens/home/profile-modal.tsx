@@ -108,6 +108,7 @@ export default function ProfileModal() {
                 }
               />
             </Card>
+
             <Card style={style.cardStyle}>
               <Card.Content style={style.cardContent}>
                 <Text variant="headlineMedium">isOwner</Text>
@@ -117,6 +118,7 @@ export default function ProfileModal() {
                 />
               </Card.Content>
             </Card>
+
             <Card style={style.cardStyle}>
               <Card.Content style={style.cardContent}>
                 {!member.isPaused && (
@@ -131,6 +133,7 @@ export default function ProfileModal() {
                 />
               </Card.Content>
             </Card>
+
             <Card
               style={[
                 style.footerCard,
