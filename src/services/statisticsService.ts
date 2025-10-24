@@ -1,5 +1,5 @@
+import { endOfMonth, startOfMonth, subMonths } from "date-fns";
 import { ProfileDb } from "../data/household-db";
-
 export interface Chore {
   id: string;
   title: string;
@@ -27,6 +27,7 @@ export const mockProfiles: ProfileDb[] = [
     isOwner: true,
     isPending: false,
     isPaused: false,
+    isDeleted: false,
     pausedStart: null,
     pausedEnd: null,
     householdId: "household_001",
@@ -39,6 +40,7 @@ export const mockProfiles: ProfileDb[] = [
     isOwner: false,
     isPending: false,
     isPaused: false,
+    isDeleted: false,
     pausedStart: null,
     pausedEnd: null,
     householdId: "household_001",
@@ -51,6 +53,7 @@ export const mockProfiles: ProfileDb[] = [
     isOwner: false,
     isPending: false,
     isPaused: false,
+    isDeleted: false,
     pausedStart: null,
     pausedEnd: null,
     householdId: "household_001",
@@ -102,6 +105,28 @@ export const mockChores: Chore[] = [
     isArchived: false,
     assignedTo: [mockProfiles[2]],
   },
+  {
+    id: "chore_005",
+    title: "Handla",
+    description: "Handla mat inför veckan",
+    frequencyDays: 7,
+    weight: 5,
+    imageUrl: null,
+    audioUrl: null,
+    isArchived: false,
+    assignedTo: [mockProfiles[2]],
+  },
+  {
+    id: "chore_006",
+    title: "Moppa alla golv",
+    description: "Moppa alla golv i HELA hushållet",
+    frequencyDays: 14,
+    weight: 10,
+    imageUrl: null,
+    audioUrl: null,
+    isArchived: false,
+    assignedTo: [mockProfiles[1]],
+  },
 ];
 
 export const mockedCompletedByChores: {
@@ -142,6 +167,22 @@ export const mockedCompletedByChores: {
   {
     profile_id: "3",
     chore_id: "chore_003",
+    completedAt: new Date("2025-10-20T20:00:00Z"),
+  },
+  {
+    profile_id: "1",
+    chore_id: "chore_005",
+    completedAt: new Date("2025-10-20T20:00:00Z"),
+  },
+
+  {
+    profile_id: "2",
+    chore_id: "chore_005",
+    completedAt: new Date("2025-10-20T20:00:00Z"),
+  },
+  {
+    profile_id: "2",
+    chore_id: "chore_006",
     completedAt: new Date("2025-10-20T20:00:00Z"),
   },
 
@@ -273,6 +314,11 @@ export const mockedCompletedByChores: {
     chore_id: "chore_004",
     completedAt: new Date("2025-09-28T10:00:00Z"),
   },
+  {
+    profile_id: "2",
+    chore_id: "chore_004",
+    completedAt: new Date("2025-09-29T10:00:00Z"),
+  },
 ];
 
 // Interface statistic för profilen i den totala Pajen. SERVICE
@@ -306,12 +352,72 @@ interface StatisticsData {
   chorePies: IndividualChoresPieStats[];
 }
 
-// Denna ska skicka ut objektet med all statisticData.
-export function getStatisticsData() {
+export interface SelectPeriod {
+  chosenPeriod: "Denna veckan" | "Föregående veckan" | "Föregående månad";
+}
+
+interface DateRange {
+  start: Date;
+  end: Date;
+}
+
+export function getPrevMonth(): DateRange {
+  const now = new Date();
+  const prev = subMonths(now, 1);
+  const start = startOfMonth(prev);
+  const end = endOfMonth(prev);
+  return { start: start, end: end };
+}
+
+export function getDateRange(selectPeriod: SelectPeriod): DateRange {
+  const now = new Date();
+  if (
+    selectPeriod.chosenPeriod === "Denna veckan" ||
+    selectPeriod.chosenPeriod === "Föregående veckan"
+  ) {
+    const day = now.getDay();
+    const daysToMonday = day === 0 ? -6 : 1 - day;
+
+    const monday = new Date(now);
+    monday.setHours(0, 0, 0, 0);
+    monday.setDate(
+      now.getDate() +
+        daysToMonday +
+        (selectPeriod.chosenPeriod === "Föregående veckan" ? -7 : 0)
+    );
+
+    const nextMonday = new Date(monday);
+
+    nextMonday.setDate(monday.getDate() + 7);
+    console.log(nextMonday);
+    console.log(monday);
+
+    return { start: monday, end: nextMonday };
+  }
+  return getPrevMonth();
+}
+
+// Denna metoden ska bort sen och ersättas av databasanrop.
+export function sortCompletedChoresByWeek(
+  completedChores: CompletedBy[],
+  dateRange: DateRange
+) {
+  const completedChoresByWeek = completedChores.filter(
+    (cc) => cc.completedAt > dateRange.start && cc.completedAt <= dateRange.end
+  );
+  console.log(completedChoresByWeek.map((c) => c.chore_id));
+  return completedChoresByWeek;
+}
+
+export function getStatisticsData(selectPeriod: SelectPeriod) {
+  const dateRange = getDateRange(selectPeriod);
   // DatabasAnrop
   const profiles = mockProfiles;
   // DatabasAnrop
-  const completedChores = mockedCompletedByChores;
+  const completedChores = sortCompletedChoresByWeek(
+    mockedCompletedByChores,
+    dateRange
+  );
   // DatabasAnrop
   const chores = mockChores;
 
