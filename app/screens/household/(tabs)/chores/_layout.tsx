@@ -13,6 +13,8 @@ export default function ChoresLayout() {
         animation: "default",
         presentation: "card",
         freezeOnBlur: true,
+        headerStyle: { backgroundColor: theme.colors.background },
+        headerTintColor: theme.colors.onBackground,
       }}
     >
       <Stack.Screen
