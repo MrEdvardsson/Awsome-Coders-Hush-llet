@@ -144,14 +144,31 @@ export default function InfoHousehold() {
     editHouseholdCode.mutate(newCode);
   };
 
-  const handlePendingProfile = async (member: ProfileDb, accept: boolean) => {
-    if (accept) {
-      console.log("Accepterar");
-      await pendingMember(household.id, member.id, false);
-    } else {
-      console.log("Nekar");
-      await pendingMember(household.id, member.id, true);
-    }
+  const pendingProfileMutation = useMutation({
+    mutationFn: pendingMember,
+    onSuccess: (updatedProfile) => {
+      queryClient.setQueryData(["profiles", updatedProfile.id], updatedProfile);
+
+      queryClient.invalidateQueries({
+        queryKey: ["households", updatedProfile.householdId],
+      });
+    },
+    onError: (error) => {
+      console.error("❌ Error updating member:", error);
+      alert("Något gick fel vid uppdateringen");
+      router.back();
+    },
+  });
+
+  const handlePendingProfile = (member: ProfileDb, accept: boolean) => {
+    console.log(accept ? "✅ Accepterar medlem" : "❌ Nekar medlem");
+
+    pendingProfileMutation.mutate({
+      isDeleted: !accept,
+      isPending: member.isPending,
+      Id: member.id,
+      householdId: household.id,
+    });
   };
 
   const handleProfileSettings = (member: ProfileDb) => {
@@ -314,7 +331,7 @@ export default function InfoHousehold() {
                   Väntande förfrågningar
                 </Text>
                 <Chip mode="outlined" compact>
-                  {household.profiles?.filter((item) => item.isPending)
+                  {householdData.profiles?.filter((item) => item.isPending)
                     .length || 0}
                 </Chip>
               </View>
