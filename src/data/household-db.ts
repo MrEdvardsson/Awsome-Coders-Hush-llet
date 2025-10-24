@@ -12,7 +12,7 @@ import {
   setDoc,
   Timestamp,
   updateDoc,
-  where,
+  where
 } from "firebase/firestore";
 
 const HOUSEHOLDS = "households";
@@ -400,4 +400,51 @@ export async function getUserProfileForHousehold(
 
   const profileDoc = snapshot.docs[0];
   return { id: profileDoc.id, ...profileDoc.data() } as ProfileDb;
+}
+
+export async function leaveHousehold(
+  householdId: string,
+  profileId: string,
+  userId: string
+): Promise<{ success: boolean; error?: string }> {
+  try {
+    const profileRef = doc(db, HOUSEHOLDS, householdId, PROFILES, profileId);
+    const profileSnap = await getDoc(profileRef);
+
+    if (!profileSnap.exists()) {
+      return { success: false, error: "Profil hittades inte" };
+    }
+
+    const profileData = profileSnap.data() as ProfileDb;
+
+    if (profileData.isOwner) {
+      const profilesRef = collection(db, HOUSEHOLDS, householdId, PROFILES);
+      const profilesSnap = await getDocs(profilesRef);
+
+      const activeOwners = profilesSnap.docs.filter(
+        (doc) => doc.data().isOwner && !doc.data().isDeleted
+      );
+
+      if (activeOwners.length <= 1) {
+        return {
+          success: false,
+          error:
+            "Du är den enda ägaren. Gör någon annan till ägare innan du lämnar hushållet.",
+        };
+      }
+    }
+
+    await updateDoc(profileRef, {
+      isDeleted: true,
+      deletedAt: serverTimestamp(),
+    });
+
+    return { success: true };
+  } catch (error) {
+    console.error("Error leaving household:", error);
+    return {
+      success: false,
+      error: "Kunde inte lämna hushållet. Försök igen.",
+    };
+  }
 }
