@@ -3,6 +3,7 @@ import { useAppTheme } from "@/constants/app-theme";
 import { db } from "@/firebase-config";
 import {
   GetHousehold,
+  leaveHousehold,
   pendingMember,
   ProfileDb,
   UpdateCode,
@@ -152,6 +153,53 @@ export default function InfoHousehold() {
       console.log("Nekar");
       await pendingMember(household.id, member.id, true);
     }
+  };
+
+  const leaveMutation = useMutation({
+    mutationFn: async () => {
+      const currentUserProfile = householdData?.profiles?.find(
+        (p) => p.uid === user?.uid
+      );
+      if (!currentUserProfile) {
+        throw new Error("Profil hittades inte");
+      }
+      return await leaveHousehold(
+        household.id,
+        currentUserProfile.id,
+        user!.uid
+      );
+    },
+    onSuccess: (result) => {
+      if (result.success) {
+        queryClient.invalidateQueries({ queryKey: ["user_extend", user?.uid] });
+        Alert.alert("Hushåll lämnat", "Du har lämnat hushållet", [
+          {
+            text: "OK",
+            onPress: () => router.replace("/screens/home"),
+          },
+        ]);
+      } else {
+        Alert.alert("Fel", result.error || "Kunde inte lämna hushållet");
+      }
+    },
+    onError: (error) => {
+      Alert.alert("Fel", (error as Error).message);
+    },
+  });
+
+  const handleLeaveHousehold = () => {
+    Alert.alert(
+      "Lämna hushåll",
+      "Är du säker på att du vill lämna detta hushåll?",
+      [
+        { text: "Avbryt", style: "cancel" },
+        {
+          text: "Lämna",
+          style: "destructive",
+          onPress: () => leaveMutation.mutate(),
+        },
+      ]
+    );
   };
 
   const handleProfileSettings = (member: ProfileDb) => {
@@ -381,6 +429,20 @@ export default function InfoHousehold() {
                 ))}
             </View>
           )}
+
+        {/* Lämna hushåll-knapp */}
+        <Surface style={styles.section} elevation={1}>
+          <Button
+            mode="outlined"
+            onPress={handleLeaveHousehold}
+            icon="exit-to-app"
+            textColor={theme.colors.error}
+            style={{ borderColor: theme.colors.error }}
+            loading={leaveMutation.isPending}
+          >
+            Lämna hushåll
+          </Button>
+        </Surface>
       </ScrollView>
     </SafeAreaView>
   );
