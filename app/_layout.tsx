@@ -16,7 +16,7 @@ import { MenuProvider } from "react-native-popup-menu";
 import Toast from "react-native-toast-message";
 import { auth } from "../firebase-config";
 import RootNavigation from "./root-navigation";
-import { getStatisticsData } from "@/src/services/statisticsService";
+
 SplashScreen.preventAutoHideAsync();
 
 const queryClient = new QueryClient({
